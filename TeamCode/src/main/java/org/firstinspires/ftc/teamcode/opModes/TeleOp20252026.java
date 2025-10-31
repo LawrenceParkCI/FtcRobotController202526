@@ -54,9 +54,9 @@ public class TeleOp20252026 extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        carousel = hardwareMap.get(DcMotorEx.class, "Carousel");
-        intake   = hardwareMap.get(DcMotor.class, "Intake");
-        shooter  = hardwareMap.get(DcMotorEx.class, "Shooter");
+        carousel = hardwareMap.get(DcMotorEx.class, "carousel");
+        intake   = hardwareMap.get(DcMotor.class, "intake");
+        shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 
         pusher = hardwareMap.get(Servo.class, "pusher");
 
@@ -77,7 +77,6 @@ public class TeleOp20252026 extends LinearOpMode {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Shooter and carousel: reset encoders for calibration
-        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -184,6 +183,9 @@ public class TeleOp20252026 extends LinearOpMode {
 
             // --- TELEMETRY ---
             telemetry.clearAll();
+            telemetry.addData("Encoder Shooter Position",     shooter.getCurrentPosition());
+            telemetry.addData("Encoder Shooter Velocity",     shooter.getVelocity());
+            telemetry.addData("Encoder Power", shooter.getPower());
             telemetry.addData("currentRPM", String.format("%.1f", currentRPM));
             telemetry.addData("targetRPM", String.format("%.1f", targetRPM));
             telemetry.addData("targetMet", targetMet);
