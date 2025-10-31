@@ -36,7 +36,7 @@ public class ServoPosSweepStopGuaranteed extends LinearOpMode {
             // keeping position call ensures it stays commanded at that angle.
             sleep(5000);
 
-            // Set to 60 degrees and hold
+            // Set to 80 degrees and hold
             carouselServo.setPosition(pos80);
             sleep(5000);
         }
