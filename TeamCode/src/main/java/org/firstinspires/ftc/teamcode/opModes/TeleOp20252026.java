@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "TeleOp20252026", group = "TeleOp")
 public class TeleOp20252026 extends LinearOpMode {
@@ -27,9 +26,6 @@ public class TeleOp20252026 extends LinearOpMode {
     private double targetRPM = 0.0;
     private boolean targetMet = false;
 
-    // Timing for RPM calculations
-    private ElapsedTime rpmTimer = new ElapsedTime();
-    private int lastShooterTicks = 0;
 
     // Encoder specs (from manufacturer data)
     // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
@@ -76,23 +72,21 @@ public class TeleOp20252026 extends LinearOpMode {
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Shooter and carousel: reset encoders for calibration
+        // Shooter and carousel: set mode
+        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0.0);
 
         // Initialize carousel angle variable to 0 and ensure stopped
-        carousel.setPower(0.0);
+        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         carouselAngleDeg = 0.0; // encoder is zeroed above
 
-        // Reset RPM timing
-        rpmTimer.reset();
-        lastShooterTicks = shooter.getCurrentPosition();
 
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
@@ -138,25 +132,22 @@ public class TeleOp20252026 extends LinearOpMode {
             if (gamepad1.a) intakePower *= 0.30;
             intake.setPower(intakePower);
 
-            // --- SHOOTER CONTROL (gamepad2) ---
-            // Buttons: X=1000 RPM, A=2500 RPM, B=5000 RPM, Y=0 RPM
-            // When pressed, set motor power/velocity and update currentRPM and targetRPM logic.
+            // --- SHOOTER CONTROL with servo (gamepad2) ---
+            // Buttons: X=1000 RPM, A=2500 RPM, B=4000 RPM, shoot and stop motor once done
+            // When pressed, set motor velocity and update currentRPM and targetRPM logic.
 
             // We'll set shooter velocity in ticks per second, using SHOOTER_PPR pulses per rev:
             // desiredRPM -> ticksPerSec = desiredRPM * (SHOOTER_PPR / 60)
             if (gamepad2.x) {
-                setShooterTargetRPM(1000.0);
+                shoot(1000);
             } else if (gamepad2.a) {
-                setShooterTargetRPM(2500.0);
+                shoot(2500);
             } else if (gamepad2.b) {
-                setShooterTargetRPM(5000.0);
-            } else if (gamepad2.y) {
-                setShooterTargetRPM(0.0);
+                shoot(4000);
             }
-            // Update currentRPM via encoder delta
             updateShooterRPM();
 
-            // --- PUSHER SERVO (gamepad2 RB) ---
+           /* // --- PUSHER SERVO (gamepad2 RB) ---
             if (gamepad2.right_bumper) {
                 // rotate clockwise 80 degrees then back immediately and set power to 0 (servo movement done)
                 // We implement as a quick move; in a real robot you might want async or timed control.
@@ -164,30 +155,36 @@ public class TeleOp20252026 extends LinearOpMode {
                 sleep(200); // short wait to allow movement (adjust as needed)
                 setServoAngle(pusher, 0.0);
                 sleep(100);
+            }*/
+            // --- Carousel CONTROL (gamepad2) ---
+            double carouselPower = 0.0;
+            if (gamepad2.right_trigger > 0.05) {
+                carouselPower = gamepad2.right_trigger; // backwards full
+            } else if (gamepad2.left_trigger > 0.05) {
+                carouselPower = -gamepad2.left_trigger; // forwards
+            } else {
+                carouselPower = 0.0;
             }
+            double carousel_lim = 50;
+            carousel.setVelocity(carouselPower*carousel_lim);
 
             // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
             // LB + DPad Right/Left -> ±60° ; DPad Right/Left -> ±120°
-            if (gamepad2.left_bumper && gamepad2.dpad_right) {
+            if (gamepad2.dpad_up) {
                 moveCarouselByDegrees(60.0);
-            } else if (gamepad2.left_bumper && gamepad2.dpad_left) {
+            } else if (gamepad2.dpad_down) {
                 moveCarouselByDegrees(-60.0);
             } else if (gamepad2.dpad_right) {
                 moveCarouselByDegrees(120.0);
             } else if (gamepad2.dpad_left) {
                 moveCarouselByDegrees(-120.0);
-            } else {
-                // keep frozen (brake behavior already set)
             }
 
             // --- TELEMETRY ---
             telemetry.clearAll();
-            telemetry.addData("Encoder Shooter Position",     shooter.getCurrentPosition());
-            telemetry.addData("Encoder Shooter Velocity",     shooter.getVelocity());
-            telemetry.addData("Encoder Power", shooter.getPower());
-            telemetry.addData("currentRPM", String.format("%.1f", currentRPM));
-            telemetry.addData("targetRPM", String.format("%.1f", targetRPM));
+            telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
+            telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
             telemetry.addData("targetMet", targetMet);
             telemetry.update();
 
@@ -196,22 +193,41 @@ public class TeleOp20252026 extends LinearOpMode {
     }
 
     // --- Helper methods ---
-
     private void setServoAngle(Servo s, double angleDeg) {
         // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
         double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
         s.setPosition(pos);
     }
-
     private double RangeClip(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
     }
-
-    private void setShooterTargetRPM(double rpm) {
-        targetRPM = rpm * (1.0 - 0.10); // target minimum as specified (90% of desired)
+    //Shoots at target rpm
+    private void shoot(double RPM){
+        setShooterTargetRPM(RPM);
+        updateShooterRPM();
+        telemetry.clearAll();
+        telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
+        telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
+        telemetry.addData("targetMet", targetMet);
+        telemetry.update();
+        while (opModeIsActive() && currentRPM < targetRPM) {
+            updateShooterRPM();
+            telemetry.clearAll();
+            telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
+            telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
+            telemetry.addData("targetMet", targetMet);
+            telemetry.update();
+        }
+        setServoAngle(pusher, 80.0);
+        sleep(200); // short wait to allow movement (adjust as needed)
+        setServoAngle(pusher, 0.0);
+        sleep(1000);
+        setShooterTargetRPM(0);
+    }
+    private void setShooterTargetRPM(double desiredRPM) {
+        targetRPM = desiredRPM * (1.0 - 0.10); // target minimum as specified (90% of desired)
         // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-        double desiredRPM = rpm;
-        double ticksPerSec = desiredRPM * (SHOOTER_PPR / 60.0);
+        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
         // DcMotorEx allows setting velocity in ticks per second
         shooter.setVelocity(ticksPerSec);
         // Immediately after changing speed, update actual currentRPM from encoder
@@ -220,26 +236,31 @@ public class TeleOp20252026 extends LinearOpMode {
     }
 
     private void updateShooterRPM() {
-        // Measure delta ticks over a short safe interval (non-blocking)
-        // We'll compute using elapsed time since last check
-        double elapsed = rpmTimer.seconds();
-        if (elapsed < 0.05) {
-            // too soon; skip to avoid noisy result but still update targetMet based on previous values
-            targetMet = (currentRPM >= targetRPM);
-            return;
-        }
-        int currentTicks = shooter.getCurrentPosition();
-        int deltaTicks = currentTicks - lastShooterTicks;
-        double ticksPerSec = deltaTicks / elapsed;
-        // ticksPerSec -> RPM
-        double rpm = ticksPerSec * (60.0 / SHOOTER_PPR);
-        // Smooth the RPM reading a little
-        currentRPM = currentRPM * 0.45 + rpm * 0.55;
-        lastShooterTicks = currentTicks;
-        rpmTimer.reset();
+        //get ticks per second
+        double ticksPerSec = shooter.getVelocity();
+        //update current RPM ticksPerSec*RPM -> RPM
+        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
     }
-
+    private void moveCarouselByDegrees(double deltaDeg){
+        double newAngle = carouselAngleDeg + deltaDeg; //get New Angle
+        newAngle = normalizeAngle(newAngle); // ensure within [0,360)
+        carouselAngleDeg = newAngle;
+        double pow = 1;
+        if(deltaDeg < 0){
+            carousel.setPower(-pow);
+        }else {
+            carousel.setPower(pow);
+        }
+        double timeMs = 500;
+        if(119.5 <= deltaDeg && deltaDeg <= 120.5){
+            timeMs *=2;
+        }
+        sleep(Math.round(timeMs));
+        carousel.setPower(0);
+        sleep(500);
+    }
+    /*
     private void moveCarouselByDegrees(double deltaDeg) {
         // Convert deltaDeg to encoder ticks using CAROUSEL_PPR (pulses per output shaft revolution)
         // Ensure we wait until action completes before returning
@@ -251,27 +272,22 @@ public class TeleOp20252026 extends LinearOpMode {
         int targetTicksInt = (int)Math.round(targetTicks);
 
         // Command: run to position (using RUN_TO_POSITION)
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // We want to set current encoder to carouselAngleDeg position mapped to ticks before moving
         // But since we reset, we'll set target relative
         // Compute relative ticks from 0 to desired ticks
         carousel.setTargetPosition(targetTicksInt);
         // Use a moderate power to move (tweak as needed)
-        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         carousel.setPower(0.5);
 
         // Wait until move completes
         while (opModeIsActive() && carousel.isBusy()) {
             idle();
         }
-
         // Stop and hold position
         carousel.setPower(0.0);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         // Store normalized angle
         carouselAngleDeg = newAngle;
-    }
+    }*/
 
     private double normalizeAngle(double a) {
         double v = a % 360.0;
