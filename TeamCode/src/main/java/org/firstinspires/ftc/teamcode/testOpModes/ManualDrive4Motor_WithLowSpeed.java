@@ -48,7 +48,7 @@ public class ManualDrive4Motor_WithLowSpeed extends LinearOpMode {
             // Read joysticks
             double leftStickY = -gamepad1.left_stick_y; // forward is negative on gamepad, invert so up = positive
             double leftStickX = gamepad1.left_stick_x;  // strafe
-            double rightStickX = gamepad1.right_stick_x; // rotation
+            double rightStickX = -gamepad1.right_stick_x; // rotation
 
             // Apply deadband
             leftStickY = applyDeadband(leftStickY, JOYSTICK_DEADBAND);

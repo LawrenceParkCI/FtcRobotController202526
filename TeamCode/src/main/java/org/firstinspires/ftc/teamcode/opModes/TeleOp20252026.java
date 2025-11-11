@@ -6,6 +6,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 @TeleOp(name = "TeleOp20252026", group = "TeleOp")
 public class TeleOp20252026 extends LinearOpMode {
@@ -25,6 +28,8 @@ public class TeleOp20252026 extends LinearOpMode {
     private double currentRPM = 0.0;
     private double targetRPM = 0.0;
     private boolean targetMet = false;
+
+
 
 
     // Encoder specs (from manufacturer data)
@@ -89,6 +94,7 @@ public class TeleOp20252026 extends LinearOpMode {
 
 
         telemetry.addLine("Ready. Press Play to start.");
+        telemetry.addData("Carousel Position: ", carousel.getCurrentPosition());
         telemetry.update();
 
         waitForStart();
@@ -97,9 +103,9 @@ public class TeleOp20252026 extends LinearOpMode {
         while (opModeIsActive()) {
 
             // --- DRIVE CONTROL (gamepad1) ---
-            double lx = -gamepad1.left_stick_x;   // left-stick left/right: strafing
+            double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
             double ly = -gamepad1.left_stick_y;   // left-stick up/down: forward/back
-            double rx =  gamepad1.right_stick_x;  // right-stick left/right: rotation
+            double rx = -gamepad1.right_stick_x;  // right-stick left/right: rotation
 
             // Compute base motion powers
             // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
@@ -143,7 +149,7 @@ public class TeleOp20252026 extends LinearOpMode {
             } else if (gamepad2.a) {
                 shoot(2500);
             } else if (gamepad2.b) {
-                shoot(4000);
+                shoot(5000);
             }
             updateShooterRPM();
 
@@ -183,9 +189,11 @@ public class TeleOp20252026 extends LinearOpMode {
 
             // --- TELEMETRY ---
             telemetry.clearAll();
+            telemetry.addData("Carousel Position: ", carousel.getCurrentPosition());
             telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
             telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
-            telemetry.addData("targetMet", targetMet);
+            telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("Target RPM Met?: ", targetMet);
             telemetry.update();
 
             idle();
@@ -208,24 +216,28 @@ public class TeleOp20252026 extends LinearOpMode {
         telemetry.clearAll();
         telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
         telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
+        telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
         telemetry.addData("targetMet", targetMet);
         telemetry.update();
-        while (opModeIsActive() && currentRPM < targetRPM) {
+        while (opModeIsActive() && !targetMet) {
             updateShooterRPM();
             telemetry.clearAll();
             telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
             telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
+            telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
             telemetry.addData("targetMet", targetMet);
             telemetry.update();
         }
+        sleep(500);
         setServoAngle(pusher, 80.0);
         sleep(200); // short wait to allow movement (adjust as needed)
         setServoAngle(pusher, 0.0);
         sleep(1000);
         setShooterTargetRPM(0);
+        updateShooterRPM();
     }
     private void setShooterTargetRPM(double desiredRPM) {
-        targetRPM = desiredRPM * (1.0 - 0.10); // target minimum as specified (90% of desired)
+        targetRPM = desiredRPM; // target minimum as specified
         // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
         double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
         // DcMotorEx allows setting velocity in ticks per second
@@ -242,7 +254,7 @@ public class TeleOp20252026 extends LinearOpMode {
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
     }
-    private void moveCarouselByDegrees(double deltaDeg){
+    /*private void moveCarouselByDegrees(double deltaDeg){
         double newAngle = carouselAngleDeg + deltaDeg; //get New Angle
         newAngle = normalizeAngle(newAngle); // ensure within [0,360)
         carouselAngleDeg = newAngle;
@@ -259,8 +271,7 @@ public class TeleOp20252026 extends LinearOpMode {
         sleep(Math.round(timeMs));
         carousel.setPower(0);
         sleep(500);
-    }
-    /*
+    }*/
     private void moveCarouselByDegrees(double deltaDeg) {
         // Convert deltaDeg to encoder ticks using CAROUSEL_PPR (pulses per output shaft revolution)
         // Ensure we wait until action completes before returning
@@ -287,7 +298,8 @@ public class TeleOp20252026 extends LinearOpMode {
         carousel.setPower(0.0);
         // Store normalized angle
         carouselAngleDeg = newAngle;
-    }*/
+        sleep(1000);
+    }
 
     private double normalizeAngle(double a) {
         double v = a % 360.0;
