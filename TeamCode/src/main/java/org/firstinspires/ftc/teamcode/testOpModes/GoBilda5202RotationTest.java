@@ -2,151 +2,176 @@ package org.firstinspires.ftc.teamcode.testOpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "GoBilda5202RotationTest", group = "TeleOp")
+@TeleOp(name="GoBilda5202RotationTest", group="TeleOp")
 public class GoBilda5202RotationTest extends LinearOpMode {
 
-    private DcMotorEx carousel;
-    private final double ENCODER_PPR = 2786.2; // encoder pulses per revolution at output shaft
-    private double currentAngle = 0.0; // tracks angle in [0,360)
-    private final ElapsedTime runtime = new ElapsedTime();
+    // IMPORTANT: Replace this with the correct ticks-per-output-rotation for your motor/gearbox.
+    // For goBILDA 5202 Yellow Jacket, TPR depends on the gear ratio.
+    // Example placeholders (do NOT assume they match your 99.5:1 model):
+    //  - 13.7:1  = ~537.6
+    //  - 19.2:1  = ~753.6
+    //  - 30:1    = ~1600
+    //  - 50:1    = ~2800
+    //  - 99.5:1  = ~5600–11200 (varies with encoder CPR assumptions)
+    // Verify your exact `TICKS_PER_REV` from your motor specs or by calibration.
+    private static final double TICKS_PER_REV = 5600; // placeholder; measure and update!
+
+    // Motion power used for RUN_TO_POSITION moves (tune as needed)
+    private static final double MOVE_POWER = 0.4;
+
+    // Angle increments
+    private static final double SIXTH_TURN_DEG = 60.0;
+    private static final double THIRD_TURN_DEG = 120.0;
+
+    // Debounce timing to avoid double-triggering on a single press
+    private static final double DEBOUNCE_MS = 200;
+
+    // Track angle in [0, 360)
+    private double currentAngleDeg = 0.0;
+
+    // Edge detection helpers
+    private boolean prevLB = false;
+    private boolean prevDpadL = false;
+    private boolean prevDpadR = false;
+
+    private DcMotorEx motor;
+    private ElapsedTime pressTimer = new ElapsedTime();
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // Replace "carouselMotor" with the name you used in the robot configuration
-        carousel = hardwareMap.get(DcMotorEx.class, "carousel");
+        // Map the motor from the configuration as "carousel" (rename if needed)
+        motor = hardwareMap.get(DcMotorEx.class, "carousel");
 
-        // Basic motor direction / zeroing setup
-        carousel.setDirection(DcMotorSimple.Direction.FORWARD);
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // Ensure no drift when power = 0
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Start with encoder = 0 and motor not moving
-        carousel.setPower(0.0);
+        // Set encoder to zero and establish 0° reference
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motor.setTargetPosition(0);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(0.0);
+        currentAngleDeg = 0.0; // angle in [0, 360)
+        pressTimer.reset();
+
+        telemetry.addLine("Initialized: encoder = 0, angle = 0°");
+        telemetry.addLine("Controls (gamepad2):");
+        telemetry.addLine("  LB + Dpad Right: +60° (clockwise)");
+        telemetry.addLine("  LB + Dpad Left : -60° (counterclockwise)");
+        telemetry.addLine("  Dpad Right     : +120° (clockwise)");
+        telemetry.addLine("  Dpad Left      : -120° (counterclockwise)");
+        telemetry.addLine("Motor frozen when idle");
+        telemetry.update();
 
         waitForStart();
-
-        // Ensure encoder is considered zeroed at start
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        currentAngle = 0.0;
+        if (isStopRequested()) return;
 
         while (opModeIsActive()) {
-            boolean actionTaken = false;
+            // Keep motor frozen unless a command is executing
+            // RUN_TO_POSITION holds itself; when idle ensure power 0 and target=current
+            if (!motor.isBusy()) {
+                motor.setPower(0.0);
+                motor.setTargetPosition(motor.getCurrentPosition());
+            }
 
-            // Read buttons
+            // Read current button states
             boolean lb = gamepad2.left_bumper;
-            boolean dpadRight = gamepad2.dpad_right;
-            boolean dpadLeft = gamepad2.dpad_left;
+            boolean dpadL = gamepad2.dpad_left;
+            boolean dpadR = gamepad2.dpad_right;
 
-            if (lb && dpadRight) {
-                // LB + D-Pad R -> +60 deg
-                rotateByDegrees(60.0);
-                actionTaken = true;
-            } else if (lb && dpadLeft) {
-                // LB + D-Pad L -> -60 deg
-                rotateByDegrees(-60.0);
-                actionTaken = true;
-            } else if (dpadRight && !lb) {
-                // D-Pad R -> +120 deg
-                rotateByDegrees(120.0);
-                actionTaken = true;
-            } else if (dpadLeft && !lb) {
-                // D-Pad L -> -120 deg
-                rotateByDegrees(-120.0);
-                actionTaken = true;
+            // Edge detection (press events)
+            boolean lbPressed   = lb && !prevLB;
+            boolean dpadLPressed = dpadL && !prevDpadL;
+            boolean dpadRPressed = dpadR && !prevDpadR;
+
+            // Update previous states
+            prevLB = lb;
+            prevDpadL = dpadL;
+            prevDpadR = dpadR;
+
+            // Only accept a new command if:
+            //  - Motor not busy (previous action completed)
+            //  - Debounce interval elapsed
+            boolean readyForNewCommand = !motor.isBusy() && (pressTimer.milliseconds() > DEBOUNCE_MS);
+
+            if (readyForNewCommand) {
+                Double deltaDeg = null;
+
+                // Priority order per spec:
+                // If LB + Dpad R -> +60°
+                // Else if LB + Dpad L -> -60°
+                // Else if Dpad R -> +120°
+                // Else if Dpad L -> -120°
+                // Else -> do nothing (freeze)
+
+                if (lb && dpadRPressed) {
+                    deltaDeg = +SIXTH_TURN_DEG;
+                } else if (lb && dpadLPressed) {
+                    deltaDeg = -SIXTH_TURN_DEG;
+                } else if (!lb && dpadRPressed) {
+                    deltaDeg = +THIRD_TURN_DEG;
+                } else if (!lb && dpadLPressed) {
+                    deltaDeg = -THIRD_TURN_DEG;
+                }
+
+                if (deltaDeg != null) {
+                    // Compute new angle and wrap to [0, 360)
+                    currentAngleDeg = wrapAngle360(currentAngleDeg + deltaDeg);
+
+                    // Convert angle to absolute ticks relative to the initial zero reference
+                    int targetTicks = angleDegToTicks(currentAngleDeg);
+
+                    // Command the move and wait for completion
+                    moveToTargetTicksBlocking(targetTicks);
+
+                    // Reset debounce timer after a completed command
+                    pressTimer.reset();
+                }
             }
 
-            // If no action, ensure motor remains with 0 power and do nothing
-            if (!actionTaken) {
-                carousel.setPower(0.0);
-            }
+            // Telemetry
+            telemetry.addData("Encoder", motor.getCurrentPosition());
+            telemetry.addData("Target", motor.getTargetPosition());
+            telemetry.addData("Busy", motor.isBusy());
+            telemetry.addData("Angle°", currentAngleDeg);
+            telemetry.update();
 
-            // tiny sleep so loop isn't spinning too tight
-            sleep(20);
+            idle();
         }
     }
 
-    /**
-     * Rotates the motor by deltaDegrees relative to the currentAngle.
-     * Ensures final angle is normalized into [0,360).
-     * Moves the motor using RUN_TO_POSITION, waits until movement completes,
-     * then sets motor power to 0 to "stop it there at power of 0".
-     */
-    private void rotateByDegrees(double deltaDegrees) throws InterruptedException {
-        // Compute target angle, normalized into [0,360)
-        double newAngle = normalizeAngle(currentAngle + deltaDegrees);
-
-        // Compute delta from encoder perspective (we use shortest signed difference on cumulative ticks)
-        double degreesToMove = angleDeltaSigned(currentAngle, newAngle);
-
-        int ticksToMove = degreesToTicks(degreesToMove);
-
-        // Current encoder position
-        int startTicks = carousel.getCurrentPosition();
-        int targetTicks = startTicks + ticksToMove;
-
-        // Setup RUN_TO_POSITION
-        carousel.setTargetPosition(targetTicks);
-        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Set power to move (positive for forward movement, negative for reverse)
-        double movePower = (ticksToMove >= 0) ? 0.5 : -0.5;
-        // Use a reasonable power; tune if you need faster/slower movement
-        carousel.setPower(movePower);
-
-        // Wait until motion completes or opMode is no longer active
-        while (opModeIsActive() && carousel.isBusy()) {
-            // Optionally, add timeout protection if desired
-            sleep(10);
-        }
-
-        // Stop motor and set power to 0 as requested
-        carousel.setPower(0.0);
-
-        // Keep the encoder reading as-is so future calculations are relative to actual position
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        // Update currentAngle to the normalized newAngle
-        currentAngle = newAngle;
-    }
-
-    /**
-     * Convert signed degrees to encoder ticks (signed). Positive means clockwise in this scheme.
-     */
-    private int degreesToTicks(double degrees) {
-        double ticksPerRev = ENCODER_PPR; // encoder resolution at output shaft
-        double ticks = (ticksPerRev * degrees) / 360.0;
+    // Convert an angle in [0,360) to ticks on the output shaft relative to initial zero
+    private int angleDegToTicks(double angleDeg) {
+        double ticks = (angleDeg / 360.0) * TICKS_PER_REV;
         return (int) Math.round(ticks);
     }
 
-    /**
-     * Normalize angle into [0,360)
-     */
-    private double normalizeAngle(double angle) {
-        double a = angle % 360.0;
-        if (a < 0) a += 360.0;
-        return a;
+    // Execute a RUN_TO_POSITION move and block until complete, then freeze at 0 power
+    private void moveToTargetTicksBlocking(int targetTicks) throws InterruptedException {
+        motor.setTargetPosition(targetTicks);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(MOVE_POWER);
+
+        // Wait until motion completes or stop requested
+        while (opModeIsActive() && motor.isBusy()) {
+            telemetry.addData("Moving to", targetTicks);
+            telemetry.addData("Current", motor.getCurrentPosition());
+            telemetry.update();
+            idle();
+        }
+
+        // Freeze at final position
+        motor.setPower(0.0);
+        motor.setTargetPosition(motor.getCurrentPosition());
     }
 
-    /**
-     * Compute the signed minimal delta (degrees) from angleFrom to angleTo
-     * returning a value in (-180, 180] range, but we want the commanded delta
-     * to be exactly the arithmetic difference specified by user inputs (±60 or ±120).
-     * For this OpMode we want the exact delta (not shortest path), so we compute direct delta.
-     */
-    private double angleDeltaSigned(double from, double to) {
-        // Direct arithmetic delta (to - from), then normalize to the signed range (-360,360)
-        double raw = to - from;
-        // We want the exact delta that was commanded (e.g., +60 or -120) rather than always the shortest rotation.
-        // But if user presses commands repeatedly, currentAngle has been normalized and deltaDegrees will be the intended signed change.
-        // Here we return raw, but ensure it's between -360 and +360 for safety.
-        if (raw > 360.0) raw = raw % 360.0;
-        if (raw < -360.0) raw = raw % 360.0;
-        return raw;
+    // Wrap angle to [0, 360)
+    private double wrapAngle360(double angleDeg) {
+        double a = angleDeg % 360.0;
+        if (a < 0) a += 360.0;
+        return a;
     }
 }
