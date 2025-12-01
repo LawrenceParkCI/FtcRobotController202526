@@ -141,7 +141,7 @@ public class TeleOp20252026 extends LinearOpMode {
                 shooter.setVelocity(0);
                 updateShooterRPM();
             }
-           /* double intakePower = 0.0;
+            /*double intakePower = 0.0;
             if (gamepad1.left_bumper) {
                 intakePower = -1.0; // backwards full power
             } else if (gamepad1.left_trigger > 0.05) {
@@ -152,9 +152,8 @@ public class TeleOp20252026 extends LinearOpMode {
 
             // A limits max to 30%
             if (gamepad1.a) intakePower *= 0.30;
-            */
+            intake.setPower(intakePower);*/
 
-            //Servo
 
             // --- SHOOTER CONTROL with servo (gamepad2) ---
             // Buttons: X=1000 RPM, A=2500 RPM, B=4000 RPM, shoot and stop motor once done
@@ -170,13 +169,6 @@ public class TeleOp20252026 extends LinearOpMode {
                 shoot(4000);
             }
             updateShooterRPM();
-
-            if(gamepad2.left_bumper){
-                setServoAngle(pusher, 80.0);
-                sleep(200); // short wait to allow movement (adjust as needed)
-                setServoAngle(pusher, 0.0);
-            }
-
             // --- Carousel CONTROL (gamepad2) ---
             double carouselPower = 0.0;
             if (gamepad2.right_trigger > 0.05) {
@@ -187,7 +179,6 @@ public class TeleOp20252026 extends LinearOpMode {
                 carouselPower = 0.0;
             }
             carousel.setPower(carouselPower);
-
             // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
             //DPad Right/Left -> ±120°

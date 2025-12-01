@@ -40,7 +40,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         }*/
 
         // Drive forward for 1.2s
-        driveForwardFixedTime(1.25, 1);
+        driveForwardFixedTime(3, -1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
