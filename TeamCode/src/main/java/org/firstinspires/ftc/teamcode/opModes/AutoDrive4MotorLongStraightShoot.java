@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="AutoDrive4Motor_LowSpeedShortStraight", group="Autonomous")
-public class AutoDrive4Motor_LowSpeedShortStraight extends LinearOpMode {
+@Autonomous(name="AutoDrive4MotorLongStraight", group="Autonomous")
+public class AutoDrive4MotorLongStraightShoot extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -40,7 +40,7 @@ public class AutoDrive4Motor_LowSpeedShortStraight extends LinearOpMode {
         }*/
 
         // Drive forward for 1.2s
-        driveForwardFixedTime(1.25, 1);
+        driveForwardFixedTime(2.5, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data

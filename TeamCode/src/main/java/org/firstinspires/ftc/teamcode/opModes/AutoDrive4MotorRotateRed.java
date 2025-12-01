@@ -4,9 +4,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name="AutoDrive4Motor_LowSpeedLongBlue", group="Autonomous")
-public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
+@Autonomous(name="AutoDrive4MotorRotateRed", group="Autonomous")
+public class AutoDrive4MotorRotateRed extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -24,7 +27,7 @@ public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
-        telemetry.clearAll();
+        telemetry.clear();
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
         //initVision();
@@ -40,7 +43,7 @@ public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
 
         // Drive forward for 1.2s
         driveForwardFixedTime(1.2, -1);
-        rotateFixedTime(0.575, -1);
+        rotateFixedTime(0.575, 1);
         driveForwardFixedTime(1.2, -1);
         stopDrive();
 
@@ -50,7 +53,6 @@ public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
         }
         //shutdownVision();
     }
-
     private void initHardware() {
         // --- Hardware mapping ---
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
