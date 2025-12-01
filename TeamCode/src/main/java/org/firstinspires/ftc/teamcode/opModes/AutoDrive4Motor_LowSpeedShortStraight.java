@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode.testOpModes;
+package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="AutoDrive4Motor_LowSpeedLongBlue", group="Autonomous")
-public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
+@Autonomous(name="AutoDrive4Motor_LowSpeedShortStraight", group="Autonomous")
+public class AutoDrive4Motor_LowSpeedShortStraight extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -24,19 +24,23 @@ public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
+        telemetry.clearAll();
         telemetry.addLine("Ready. Press Play to start.");
+        telemetry.update();
+
+
         //initVision();
 
         waitForStart();
+        telemetry.clearAll();
+        telemetry.update();
         /*if (isStopRequested()) {
             //shutdownVision();
             return;
         }*/
 
         // Drive forward for 1.2s
-        driveForwardFixedTime(1.2, 1);
-        rotateFixedTime(0.2, 1);
-        driveForwardFixedTime(0.3, 1);
+        driveForwardFixedTime(1.25, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
@@ -80,23 +84,6 @@ public class AutoDrive4Motor_LowSpeedLongBlue extends LinearOpMode {
         leftBack.setPower(p);
         rightFront.setPower(p);
         rightBack.setPower(p);
-    }
-    private void setRotatePower(double p){
-        leftFront.setPower(p);
-        rightFront.setPower(-p);
-        leftBack.setPower(p);
-        rightBack.setPower(-p);
-    }
-    //CCW - negative
-    //CW - positive;
-    private void rotateFixedTime(double seconds, double power) {
-        long start = System.currentTimeMillis();
-        setRotatePower(power);
-        while (opModeIsActive() && !isStopRequested()
-                && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
-        }
-        stopDrive();
     }
     private void stopDrive() {
         setDrivePower(0.0);

@@ -155,7 +155,7 @@ public class AutoOp20252026 extends LinearOpMode {
     private void rotateThirdRight(){
 
         carousel.setVelocity(900);
-        sleep(405);
+        sleep(402);
         carousel.setPower(0);
     }
     private void rotateThirdLeft(){

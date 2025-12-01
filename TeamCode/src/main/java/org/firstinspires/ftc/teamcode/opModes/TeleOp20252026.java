@@ -168,8 +168,6 @@ public class TeleOp20252026 extends LinearOpMode {
                 shoot(2500);
             } else if (gamepad2.b) {
                 shoot(4000);
-            }else if(gamepad2.y){
-                shoot(0);
             }
             updateShooterRPM();
 
@@ -188,8 +186,7 @@ public class TeleOp20252026 extends LinearOpMode {
             } else {
                 carouselPower = 0.0;
             }
-            double carousel_lim = 50;
-            carousel.setVelocity(carouselPower*carousel_lim);
+            carousel.setPower(carouselPower);
 
             // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
@@ -217,14 +214,14 @@ public class TeleOp20252026 extends LinearOpMode {
         private void rotateThirdRight(){
 
             carousel.setVelocity(900);
-            sleep(405);
+            sleep(402);
             carousel.setPower(0);
             carouselAngleDeg += 120;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
         }
         private void rotateThirdLeft(){
             carousel.setVelocity(-900);
-            sleep(405);
+            sleep(402);
             carousel.setPower(0);
             carouselAngleDeg -= 120;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
@@ -239,22 +236,6 @@ public class TeleOp20252026 extends LinearOpMode {
         }
         //Shoots at target rpm
         private void shoot(double RPM){
-            if(RPM == 0){
-                setServoAngle(pusher, 80.0);
-                sleep(200); // short wait to allow movement (adjust as needed)
-                setServoAngle(pusher, 0.0);
-                sleep(500);
-                setShooterTargetRPM(RPM);
-                updateShooterRPM();
-                telemetry.clearAll();
-                telemetry.addData("Carousel Degree: ", carouselAngleDeg);
-                telemetry.addData("Current Shooter RPM:", String.format("%.1f", currentRPM));
-                telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
-                telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
-                telemetry.addData("targetMet", targetMet);
-                telemetry.update();
-                return;
-            }
             setShooterTargetRPM(RPM);
             updateShooterRPM();
             telemetry.clearAll();
@@ -264,7 +245,8 @@ public class TeleOp20252026 extends LinearOpMode {
             telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
             telemetry.addData("targetMet", targetMet);
             telemetry.update();
-            while (opModeIsActive() && !targetMet) {
+            long currMilli = System.currentTimeMillis();
+            while (opModeIsActive() && !targetMet &&(System.currentTimeMillis() - currMilli < 8000)) {
                 updateShooterRPM();
                 telemetry.clearAll();
                 telemetry.addData("Carousel Degree: ", carouselAngleDeg);
@@ -292,7 +274,6 @@ public class TeleOp20252026 extends LinearOpMode {
         updateShooterRPM();
         targetMet = (currentRPM >= targetRPM);
     }
-
     private void updateShooterRPM() {
         //get ticks per second
         double ticksPerSec = shooter.getVelocity();
@@ -300,35 +281,6 @@ public class TeleOp20252026 extends LinearOpMode {
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
     }
-    /*private void moveCarouselByDegrees(double deltaDeg) {
-        // Convert deltaDeg to encoder ticks using CAROUSEL_PPR (pulses per output shaft revolution)
-        // Ensure we wait until action completes before returning
-        double newAngle = carouselAngleDeg + deltaDeg;
-        newAngle = normalizeAngle(newAngle); // ensure within [0,360)
-        // Calculate shortest motion in terms of ticks (we will compute absolute target ticks)
-        double targetRotations = newAngle / 360.0;
-        double targetTicks = targetRotations * CAROUSEL_PPR;
-        int targetTicksInt = (int)Math.round(targetTicks);
-
-        // Command: run to position (using RUN_TO_POSITION)
-        // We want to set current encoder to carouselAngleDeg position mapped to ticks before moving
-        // But since we reset, we'll set target relative
-        // Compute relative ticks from 0 to desired ticks
-        carousel.setTargetPosition(targetTicksInt);
-        // Use a moderate power to move (tweak as needed)
-        carousel.setPower(0.5);
-
-        // Wait until move completes
-        while (opModeIsActive() && carousel.isBusy()) {
-            idle();
-        }
-        // Stop and hold position
-        carousel.setPower(0.0);
-        // Store normalized angle
-        carouselAngleDeg = newAngle;
-        sleep(1000);
-    }*/
-
     private double normalizeAngle(double a) {
         double v = a % 360.0;
         if (v < 0) v += 360.0;
