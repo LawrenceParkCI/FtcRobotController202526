@@ -5,13 +5,22 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 @Autonomous(name="AutoDrive4MotorShortStraight", group="Autonomous")
 public class AutoDrive4MotorShortStraight extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Vision
-    /*private VisionPortal visionPortal;
+    private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
     // Data structures
@@ -19,7 +28,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
     private final HashMap<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
     private char[] currentPattern = null;
-    */
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -29,25 +38,24 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         telemetry.update();
 
 
-        //initVision();
+        initVision();
 
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
-        /*if (isStopRequested()) {
-            //shutdownVision();
+        if (isStopRequested()) {
+            shutdownVision();
             return;
-        }*/
+        }
 
-        // Drive forward for 1.2s
-        driveForwardFixedTime(3, -1);
+        // Drive forward for 1.5s
+        driveForwardFixedTime(1.5, -1);
         stopDrive();
-
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
-        //shutdownVision();
+        shutdownVision();
     }
 
     private void initHardware() {
@@ -75,7 +83,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         setDrivePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
         stopDrive();
     }
@@ -88,7 +96,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
     private void stopDrive() {
         setDrivePower(0.0);
     }
-    /*
+
      private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();
@@ -128,5 +136,5 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
         }
-    }*/
+    }
 }

@@ -17,8 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Autonomous(name="AutoDrive4MotorLongStraightShoot3Ball", group="Autonomous")
-public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
+@Autonomous(name="AutoDrive4MotorRotateRedShoot1Ball", group="Autonomous")
+public class AutoDrive4MotorRotateRedShoot1Ball extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -44,6 +44,7 @@ public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
     private AprilTagProcessor aprilTag;
 
     // Data structures
+
     private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
     private char[] currentPattern = null;
@@ -67,14 +68,14 @@ public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
             return;
         }
 
-        // Drive forward for total 3.85s
-        driveForwardFixedTime(1.5, -1);
-        shoot(4000);
-        rotateThirdLeft();
-        shoot(4000);
-        rotateThirdLeft();
-        shoot(4000);
-        driveForwardFixedTime(2.35, -1);
+        // Drive forward for total 3.1s
+        driveForwardFixedTime(1.4, -1);
+        sleep(200);
+        shoot(4100);
+        sleep(200);
+        rotateFixedTime(0.575, 1);
+        sleep(200);
+        driveForwardFixedTime(1.7, -1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
@@ -137,7 +138,7 @@ public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
         setDrivePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
         stopDrive();
     }
@@ -147,21 +148,27 @@ public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
         rightFront.setPower(p);
         rightBack.setPower(p);
     }
+    private void setRotatePower(double p){
+        leftFront.setPower(p);
+        rightFront.setPower(-p);
+        leftBack.setPower(p);
+        rightBack.setPower(-p);
+    }
+    //CCW - negative
+    //CW - positive;
+    private void rotateFixedTime(double seconds, double power) {
+        long start = System.currentTimeMillis();
+        setRotatePower(power);
+        while (opModeIsActive() && !isStopRequested()
+                && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
+            updateAprilTagData();
+        }
+        stopDrive();
+    }
     private void stopDrive() {
         setDrivePower(0.0);
     }
 
-    private void rotateThirdRight(){
-
-        carousel.setVelocity(900);
-        sleep(402);
-        carousel.setPower(0);
-    }
-    private void rotateThirdLeft(){
-        carousel.setVelocity(-900);
-        sleep(402);
-        carousel.setPower(0);
-    }
     private void setServoAngle(Servo s, double angleDeg) {
         // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
         double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
@@ -204,7 +211,6 @@ public class AutoDrive4MotorLongStraightShoot3Ball extends LinearOpMode {
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
     }
-
      private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();

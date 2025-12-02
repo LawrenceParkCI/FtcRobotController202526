@@ -4,9 +4,16 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Autonomous(name="AutoDrive4MotorRotateRed", group="Autonomous")
 public class AutoDrive4MotorRotateRed extends LinearOpMode {
@@ -14,15 +21,15 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Vision
-    /*private VisionPortal visionPortal;
+    private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
     // Data structures
 
-    private final HashMap<Integer, Double> idToDistanceMeters = new HashMap<>();
+    private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
     private char[] currentPattern = null;
-    */
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -30,15 +37,15 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
         telemetry.clear();
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
-        //initVision();
+        initVision();
 
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
-        /*if (isStopRequested()) {
-            //shutdownVision();
+        if (isStopRequested()) {
+            shutdownVision();
             return;
-        }*/
+        }
 
 
         // Drive forward for 1.2s
@@ -49,9 +56,9 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
 
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
-        //shutdownVision();
+        shutdownVision();
     }
     private void initHardware() {
         // --- Hardware mapping ---
@@ -78,7 +85,7 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
         setDrivePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
         stopDrive();
     }
@@ -101,14 +108,14 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
         setRotatePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
         stopDrive();
     }
     private void stopDrive() {
         setDrivePower(0.0);
     }
-    /*
+
      private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();
@@ -120,7 +127,7 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
 
         visionPortal = portalBuilder.build();
         visionPortal.resumeStreaming();
-    }
+   }
     private void updateAprilTagData() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
         seenTagIds.clear();
@@ -148,5 +155,5 @@ public class AutoDrive4MotorRotateRed extends LinearOpMode {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
         }
-    }*/
+    }
 }

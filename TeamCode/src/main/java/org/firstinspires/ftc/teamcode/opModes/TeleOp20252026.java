@@ -129,7 +129,7 @@ public class TeleOp20252026 extends LinearOpMode {
             rightBack.setPower(rb * speedLimit);
 
             // --- INTAKE CONTROL on shooter (gamepad1) ---
-            if(gamepad1.left_bumper){
+            /*if(gamepad1.left_bumper){
                 double RPM = 1000;
                 RPM = RPM*-1;
                 // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
@@ -140,8 +140,8 @@ public class TeleOp20252026 extends LinearOpMode {
                 sleep(1100);
                 shooter.setVelocity(0);
                 updateShooterRPM();
-            }
-            /*double intakePower = 0.0;
+            }*/
+            double intakePower = 0.0;
             if (gamepad1.left_bumper) {
                 intakePower = -1.0; // backwards full power
             } else if (gamepad1.left_trigger > 0.05) {
@@ -152,7 +152,7 @@ public class TeleOp20252026 extends LinearOpMode {
 
             // A limits max to 30%
             if (gamepad1.a) intakePower *= 0.30;
-            intake.setPower(intakePower);*/
+            intake.setPower(intakePower);
 
 
             // --- SHOOTER CONTROL with servo (gamepad2) ---

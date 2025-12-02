@@ -7,6 +7,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Autonomous(name="AutoDrive4MotorLongStraightShoot1Ball", group="Autonomous")
 public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
 
@@ -30,15 +40,15 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
 
     // Vision
-    /*private VisionPortal visionPortal;
+    private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
     // Data structures
 
-    private final HashMap<Integer, Double> idToDistanceMeters = new HashMap<>();
+    private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
     private char[] currentPattern = null;
-    */
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -48,15 +58,15 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
         telemetry.update();
 
 
-        //initVision();
+        initVision();
 
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
-        /*if (isStopRequested()) {
-            //shutdownVision();
+        if (isStopRequested()) {
+            shutdownVision();
             return;
-        }*/
+        }
 
         // Drive forward for total 3.85s
         driveForwardFixedTime(1.5, -1);
@@ -66,9 +76,9 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
 
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
-            //updateAprilTagData();
+            updateAprilTagData();
         }
-        //shutdownVision();
+        shutdownVision();
     }
 
     private void initHardware() {
@@ -123,8 +133,7 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         setDrivePower(power);
         while (opModeIsActive() && !isStopRequested()
-                && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            //updateAprilTagData();
+                && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {updateAprilTagData();
         }
         stopDrive();
     }
@@ -180,7 +189,6 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
     }
-    /*
      private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();
@@ -220,5 +228,5 @@ public class AutoDrive4MotorLongStraightShoot1Ball extends LinearOpMode {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
         }
-    }*/
+    }
 }
