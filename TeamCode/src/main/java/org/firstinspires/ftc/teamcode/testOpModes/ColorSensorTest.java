@@ -38,9 +38,6 @@ public class ColorSensorTest extends LinearOpMode {
             telemetry.addData("Alpha", alpha);
             telemetry.addData("RGB", argb);
             telemetry.update();
-
-            // Idle to prevent CPU overuse
-            idle();
         }
     }
 }
