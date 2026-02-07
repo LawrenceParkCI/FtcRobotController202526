@@ -16,7 +16,6 @@ import java.util.List;
 
 @Autonomous(name="AutoDrive4MotorShortStraight", group="Autonomous")
 public class AutoDrive4MotorShortStraight extends LinearOpMode {
-
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Vision
@@ -24,22 +23,20 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
     private AprilTagProcessor aprilTag;
 
     // Data structures
-
     private final HashMap<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
     private char[] currentPattern = null;
-
-
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
+        initVision();
         telemetry.clearAll();
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
-
-
-        initVision();
-
+        if (isStopRequested()) {
+            shutdownVision();
+            return;
+        }
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
@@ -47,18 +44,16 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
             shutdownVision();
             return;
         }
-
+        mainDo();
         // Drive forward for 1.5s
-        driveForwardFixedTime(1.5, -1);
-        stopDrive();
+        driveForwardFixedTimeandStop(1, -1);
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
-            updateAprilTagData();
+            mainDo();
         }
         shutdownVision();
     }
-
-    private void initHardware() {
+    private void initHardware(){
         // --- Hardware mapping ---
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
@@ -78,12 +73,12 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Alliance tags: ID 20 (blue scoring), ID 24 (red scoring)
     }
-    private void driveForwardFixedTime(double seconds, double power) {
-        long start = System.currentTimeMillis();
+    private void driveForwardFixedTimeandStop(double seconds, double power) {
         setDrivePower(power);
-        while (opModeIsActive() && !isStopRequested()
+        long start = System.currentTimeMillis();
+        while (opModeIsActive()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            updateAprilTagData();
+            mainDo();
         }
         stopDrive();
     }
@@ -96,8 +91,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
     private void stopDrive() {
         setDrivePower(0.0);
     }
-
-     private void initVision() {
+    private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();
 
@@ -112,7 +106,7 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
     private void updateAprilTagData() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
         seenTagIds.clear();
-
+        idToDistanceMeters.clear();
         for (AprilTagDetection det : detections) {
             int id = det.id;
             double distanceMeters = det.ftcPose.range;
@@ -120,7 +114,6 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
             if (!seenTagIds.contains(id)) {
                 seenTagIds.add(id);
             }
-
             if (id == 21) {
                 currentPattern = new char[]{'g', 'p', 'p'};
             } else if (id == 22) {
@@ -131,10 +124,12 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
             // ID 20 = blue alliance scoring, ID 24 = red alliance scoring
         }
     }
-
     private void shutdownVision() {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
         }
+    }
+    private void mainDo(){
+        updateAprilTagData();
     }
 }
