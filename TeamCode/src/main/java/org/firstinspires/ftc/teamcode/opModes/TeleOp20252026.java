@@ -114,20 +114,16 @@ public class TeleOp20252026 extends LinearOpMode {
                 shooterActive = true;
                 servoActive = false;
             }
-            if(gamepad2.y && shooterActive){
-                shooterActive = false;
-                stopDcMotor();
-            }
             doAll();
             if(shooterActive){
                 doAll();
-                if(targetMet && !rpmShooterHold){
+                if((targetMet && !rpmShooterHold) || gamepad2.y){
                     rpmShooterHold = true;
                     servoActive = true;
                     currTimeShooter = System.currentTimeMillis();
                     setServoAngle(pusher, 80.0);
                 }
-
+                doAll();
             }
             doAll();
             if(servoActive && System.currentTimeMillis() - currTimeShooter >= 200){
@@ -161,35 +157,46 @@ public class TeleOp20252026 extends LinearOpMode {
                 rotateActive = true;
                 currPos = carousel.getCurrentPosition();
                 required = CAROUSEL_PPR3rd;
-                carousel.setPower(0.25);
+                int endPos = (int)(Math.round(currPos + required));
+                carousel.setTargetPosition(endPos);
+                carousel.setPower(0.5);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
                 rotateDegree = -120;
                 rotateActive = true;
                 currPos = carousel.getCurrentPosition();
                 required = CAROUSEL_PPR3rd;
-                carousel.setPower(-0.25);
+                int endPos = (int)(Math.round(currPos - required));
+                carousel.setTargetPosition(endPos);
+                carousel.setPower(0.5);
             }
             if(gamepad2.dpad_up  && !rotateActive) {
                 rotateDegree = 60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                carousel.setPower(0.25);
+                int endPos = (int)(Math.round(currPos + required));
+                carousel.setTargetPosition(endPos);
+                carousel.setPower(0.5);
             }
             if(gamepad2.dpad_down  && !rotateActive){
                 rotateDegree = -60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                carousel.setPower(-0.25);
+                int endPos = (int)(Math.round(currPos - required));
+                carousel.setTargetPosition(endPos);
+                carousel.setPower(0.5);
             }
             if(rotateActive ){
-                if(Math.abs(carousel.getCurrentPosition() - currPos) >= required/2){
+                if (!carousel.isBusy()) {
+                    carousel.setPower(0);  rotateActive = false;
+                }
+                /*if(Math.abs(carousel.getCurrentPosition() - currPos) >= required/2){
                     required = 0;
                     rotateActive = false;
                     carousel.setPower(0);
-                }
+                }*/
             }
             if(rotateActive && gamepad2.left_bumper){
                 rotateActive = false;
@@ -239,7 +246,7 @@ public class TeleOp20252026 extends LinearOpMode {
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0);
 
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         carouselAngleDeg = 0; // encoder is zeroed above
     }
