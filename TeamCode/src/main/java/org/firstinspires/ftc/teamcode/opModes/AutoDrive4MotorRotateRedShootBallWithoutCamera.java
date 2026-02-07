@@ -69,7 +69,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         }
 
         // Drive forward for total 3.1s
-        driveForwardFixedTime(0.7, -1);
+        driveForwardFixedTime(0.7, 1);
         sleep(200);
         shoot(4000);
         rotateThirdLeft();
@@ -79,7 +79,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         sleep(200);
         rotateFixedTime(0.2875, 1);
         sleep(200);
-        driveForwardFixedTime(0.85, -1);
+        driveForwardFixedTime(1.1, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
@@ -175,12 +175,12 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
     private void rotateThirdRight(){
 
         carousel.setVelocity(900);
-        sleep(402);
+        sleep(500);
         carousel.setPower(0);
     }
     private void rotateThirdLeft(){
         carousel.setVelocity(-900);
-        sleep(402);
+        sleep(500);
         carousel.setPower(0);
     }
     private void setServoAngle(Servo s, double angleDeg) {
