@@ -255,7 +255,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
         setServoAngle(pusher, 0);
 
         carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         carouselAngleDeg = 0; // encoder is zeroed above
     }
     private void updateTelemetry(){
