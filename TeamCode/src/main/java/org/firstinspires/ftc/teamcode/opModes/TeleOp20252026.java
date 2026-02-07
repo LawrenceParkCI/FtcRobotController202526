@@ -140,14 +140,17 @@ public class TeleOp20252026 extends LinearOpMode {
             doAll();
             // --- Carousel CONTROL (gamepad2) ---
             double carouselPower = 0.0;
-            if (gamepad2.right_trigger > 0.05) {
+            if (gamepad2.right_trigger > 0.05 && !rotateActive) {
                 carouselPower = -gamepad2.right_trigger; // backwards full
-            } else if (gamepad2.left_trigger > 0.05) {
+            } else if (gamepad2.left_trigger > 0.05 && !rotateActive ) {
                 carouselPower = gamepad2.left_trigger; // forwards
-            } else {
+            } else if (!rotateActive) {
                 carouselPower = 0.0;
             }
-            carousel.setPower(carouselPower);
+            if(!rotateActive){
+                carousel.setPower(carouselPower);
+            }
+
 
             // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
@@ -158,35 +161,40 @@ public class TeleOp20252026 extends LinearOpMode {
                 rotateActive = true;
                 currPos = carousel.getCurrentPosition();
                 required = CAROUSEL_PPR3rd;
-                carousel.setPower(0.5);
+                carousel.setPower(0.25);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
                 rotateDegree = -120;
                 rotateActive = true;
                 currPos = carousel.getCurrentPosition();
                 required = CAROUSEL_PPR3rd;
-                carousel.setPower(-0.5);
+                carousel.setPower(-0.25);
             }
             if(gamepad2.dpad_up  && !rotateActive) {
                 rotateDegree = 60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                carousel.setPower(0.5);
+                carousel.setPower(0.25);
             }
             if(gamepad2.dpad_down  && !rotateActive){
                 rotateDegree = -60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                carousel.setPower(-0.5);
+                carousel.setPower(-0.25);
             }
             if(rotateActive ){
-                if(Math.abs(carousel.getCurrentPosition() - currPos) >= required){
+                if(Math.abs(carousel.getCurrentPosition() - currPos) >= required/2){
                     required = 0;
                     rotateActive = false;
                     carousel.setPower(0);
                 }
+            }
+            if(rotateActive && gamepad2.left_bumper){
+                rotateActive = false;
+                required = 0;
+                carousel.setPower(0);
             }
             carouselAngleDeg += rotateDegree;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
@@ -248,6 +256,7 @@ public class TeleOp20252026 extends LinearOpMode {
         telemetry.addData("Last Position", currPos);
         telemetry.addData("Carousel Delta", carousel.getCurrentPosition() - currPos);
         telemetry.addData("Carousel Required", required);
+        telemetry.addData("Carousel AMP", carousel.getCurrent(CurrentUnit.AMPS));
         telemetry.update();
     }
     // --- Helper methods ---
