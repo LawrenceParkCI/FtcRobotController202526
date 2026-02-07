@@ -69,7 +69,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         }
 
         // Drive forward for total 3.1s
-        driveForwardFixedTime(1.4, 1);
+        driveForwardFixedTime(0.7, 1);
         sleep(200);
         shoot(4000);
         rotateThirdLeft();
@@ -77,9 +77,9 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         rotateThirdLeft();
         shoot(4000);
         sleep(200);
-        rotateFixedTime(0.575, -1);
+        rotateFixedTime(0.2875, -1);
         sleep(200);
-        driveForwardFixedTime(1.7, 1);
+        driveForwardFixedTime(0.85, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
