@@ -8,32 +8,35 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Autonomous(name = "Set0DegreesServoMotor", group = "Autonomous")
 public class Set0DegreesServoMotor extends LinearOpMode {
 
-    private Servo carouselServo;
-    private static final double MAX_ANGLE = 150.0; // degrees each side
-    private static final double FULL_RANGE = 2.0 * MAX_ANGLE; // 300 degrees
+    private Servo servo;
+    private static final double SERVO_FULL_RANGE_DEG = 300; // 300 degrees
 
     @Override
     public void runOpMode() {
         // Initialize servo from configuration (name must match Robot Config)
-        carouselServo = hardwareMap.get(Servo.class, "pusher");
+        servo = hardwareMap.get(Servo.class, "pusher");
 
-        // Convert degrees to servo position 0.0 - 1.0
-        double degrees = 0.0;
-        double position = (degrees + MAX_ANGLE) / FULL_RANGE; // (deg + 150) / 300
-
-        // Set initial position to 0 degrees (midpoint)
-        carouselServo.setPosition(position);
-
-        // Telemetry to confirm
-        telemetry.addData("Servo target deg", degrees);
-        telemetry.addData("Servo position (0..1)", position);
+        telemetry.clearAll();
+        telemetry.addLine("Ready. Press Play to start.");
+        telemetry.addData("Servo Positon", servo.getPosition());
         telemetry.update();
-
         waitForStart();
-
+        setServoAngle(servo, 0);
+        telemetry.clearAll();
+        telemetry.addLine("Ready. Press Play to start.");
+        telemetry.addData("Servo Positon", servo.getPosition());
+        telemetry.update();
         // Keep OpMode alive until stop pressed
         while (opModeIsActive()) {
-            idle();
+
         }
+    }
+    private void setServoAngle(Servo s, double angleDeg) {
+        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
+        double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
+        s.setPosition(pos);
+    }
+    private double RangeClip(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
     }
 }
