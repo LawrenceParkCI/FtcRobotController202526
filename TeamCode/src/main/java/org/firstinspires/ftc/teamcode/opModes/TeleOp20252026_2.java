@@ -1,11 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -30,6 +34,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private static final double SHOOTER_PPR = 28.0;
     // Carousel gearbox motor (99.5:1) -> ~2786.2 pulses per output shaft revolution.
     private static final double CAROUSEL_PPR3rd = 2786.2/3;
+    private static double tol = 100.0;
     private static final double CAROUSEL_PPR6th = 2786.2/6;
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
@@ -39,6 +44,8 @@ public class TeleOp20252026_2 extends LinearOpMode {
     //Intake State
     private boolean intakeActive = false;
     private long currTimeIntake=0;
+
+    private int target = 0;
     //Shooter state
 
     private boolean servoActive = false;
@@ -50,6 +57,12 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private long currPos = 0;
 
     private double required = 0;
+
+    private NormalizedColorSensor colorSensorFront;
+    private NormalizedColorSensor colorSensorBack;
+
+    private char front = 'a';
+    private char back = 'a';
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -140,9 +153,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
             // --- Carousel CONTROL (gamepad2) ---
             double carouselPower = 0.0;
             if (gamepad2.right_trigger > 0.05 && !rotateActive) {
-                carouselPower = -gamepad2.right_trigger; // backwards full
+                carouselPower = -gamepad2.right_trigger/2; // backwards full
             } else if (gamepad2.left_trigger > 0.05 && !rotateActive ) {
-                carouselPower = gamepad2.left_trigger; // forwards
+                carouselPower = gamepad2.left_trigger/2; // forwards
             } else if (!rotateActive) {
                 carouselPower = 0.0;
             }
@@ -163,47 +176,48 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 rotateActive = true;
                 required = CAROUSEL_PPR3rd;
                 currPos = carousel.getCurrentPosition();
-                int target = (int)Math.round(currPos + required);
+                target = (int)Math.round((currPos + required) - tol);
                 carousel.setTargetPosition(target);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setPower(0.3);
+                carousel.setVelocity(1000);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
                 rotateDegree = -120;
                 rotateActive = true;
                 required = CAROUSEL_PPR3rd;
                 currPos = carousel.getCurrentPosition();
-                int target = (int)Math.round(currPos - required);
+                target = (int)Math.round((currPos - required) + tol);
                 carousel.setTargetPosition(target);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setPower(0.3);
+                carousel.setVelocity(4000);
             }
             if(gamepad2.dpad_up  && !rotateActive) {
                 rotateDegree = 60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                int target = (int)Math.round(currPos + required);
+                target = (int)Math.round((currPos + required) - tol);
                 carousel.setTargetPosition(target);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setPower(0.3);
+                carousel.setVelocity(4000);
             }
             if(gamepad2.dpad_down  && !rotateActive){
                 rotateDegree = -60;
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                int target = (int)Math.round(currPos - required);
+                target = (int)Math.round((currPos - required) + tol);
                 carousel.setTargetPosition(target);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setPower(0.3);
+                carousel.setVelocity(4000);
             }
             // Check if move is complete
-            if (rotateActive && !carousel.isBusy()) {
+            if (rotateActive && !carousel.isBusy() ) {
                 rotateActive = false;
-                carousel.setPower(0);
                 // Switch back so analog triggers still work
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                carousel.setVelocity(0);
+
             }
             if(rotateActive && gamepad2.left_bumper){
                 rotateActive = false;
@@ -229,7 +243,8 @@ public class TeleOp20252026_2 extends LinearOpMode {
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 
         pusher = hardwareMap.get(Servo.class, "pusher");
-
+        colorSensorFront = hardwareMap.get(NormalizedColorSensor.class, "colorSensorFront");
+        colorSensorBack = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -253,7 +268,6 @@ public class TeleOp20252026_2 extends LinearOpMode {
 
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0);
-
         carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         carouselAngleDeg = 0; // encoder is zeroed above
@@ -261,6 +275,8 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private void updateTelemetry(){
         telemetry.clearAll();
         telemetry.addData("Carousel Degree: ", carouselAngleDeg);
+        telemetry.addData("ColorFront", front);
+        telemetry.addData("ColorBack", back);
         telemetry.addData("Current Shooter RPM:", currentRPM);
         telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
         telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
@@ -269,6 +285,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
         telemetry.addData("Carousel Power", carousel.getPower());
         telemetry.addData("Carousel Active", rotateActive);
         telemetry.addData("Last Position", currPos);
+        telemetry.addData("Target: ", target);
         telemetry.addData("Carousel Delta", carousel.getCurrentPosition() - currPos);
         telemetry.addData("Carousel Required", required);
         telemetry.addData("Carousel AMP", carousel.getCurrent(CurrentUnit.AMPS));
@@ -332,6 +349,40 @@ public class TeleOp20252026_2 extends LinearOpMode {
         int v = a % 360;
         if (v < 0) v += 360.0;
         return v;
+    }
+    private void readColor(){
+        // Read normalized RGBA values
+        NormalizedRGBA colorsfront = colorSensorFront.getNormalizedColors();
+        float[] hsv1 = new float[3];
+        // Convert to HSV
+        Color.colorToHSV(colorsfront.toColor(), hsv1);
+        NormalizedRGBA colorsBack = colorSensorBack.getNormalizedColors();
+        float[] hsv2 = new float[3];
+        // Convert to HSV
+        Color.colorToHSV(colorsBack.toColor(), hsv2);
+        if(isColorGreen(hsv1)){
+            front = 'g';
+        } else if(isColorPurple(hsv1)){
+            front = 'p';
+        }else{
+            front = 'a';
+        }
+        if(isColorGreen(hsv2)){
+            back = 'g';
+        } else if(isColorPurple(hsv2)){
+            back = 'p';
+        }else{
+            back = 'a';
+        }
+
+    }
+    private boolean isColorGreen(float[] hsv){
+        double hue = hsv[0];
+        return (hue >= 120 && hue <= 180);
+    }
+    private boolean isColorPurple(float[] hsv){
+        double hue = hsv[0];
+        return (hue >= 181 && hue <= 245);
     }
     private void doAll(){
         updateDcMotorRPM();
