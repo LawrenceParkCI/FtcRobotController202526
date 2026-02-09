@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opModes;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+//Blue
 @Autonomous(name="AutoDrive4MotorRotateBlueShootBallWithoutCamera", group="Autonomous")
 public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMode {
 
@@ -39,16 +39,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
 
-    // Vision
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTag;
-
-    // Data structures
-
-    private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
-    private final List<Integer> seenTagIds = new ArrayList<>();
-    private char[] currentPattern = null;
-
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -57,14 +47,10 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
 
-
-        initVision();
-
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
         if (isStopRequested()) {
-            shutdownVision();
             return;
         }
 
@@ -77,16 +63,14 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         rotateThirdLeft();
         shoot(4000);
         sleep(200);
-        rotateFixedTime(0.2875, -1);
+        rotateFixedTime(0.25, 1);
         sleep(200);
-        driveForwardFixedTime(1.1, 1);
+        driveForwardFixedTime(1.4, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
-            updateAprilTagData();
         }
-        shutdownVision();
     }
 
     private void initHardware() {
@@ -142,7 +126,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         setDrivePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            updateAprilTagData();
         }
         stopDrive();
     }
@@ -165,7 +148,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         setRotatePower(power);
         while (opModeIsActive() && !isStopRequested()
                 && (System.currentTimeMillis() - start) < (long)(seconds * 1000)) {
-            updateAprilTagData();
         }
         stopDrive();
     }
@@ -175,12 +157,12 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     private void rotateThirdRight(){
 
         carousel.setVelocity(900);
-        sleep(500);
+        sleep(400);
         carousel.setPower(0);
     }
     private void rotateThirdLeft(){
         carousel.setVelocity(-900);
-        sleep(500);
+        sleep(400);
         carousel.setPower(0);
     }
     private void setServoAngle(Servo s, double angleDeg) {
@@ -224,45 +206,5 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         //update current RPM ticksPerSec*RPM -> RPM
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = (currentRPM >= targetRPM);
-    }
-    private void initVision() {
-        AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
-        aprilTag = tagBuilder.build();
-
-        WebcamName webcam = hardwareMap.get(WebcamName.class, "Webcam 1");
-        VisionPortal.Builder portalBuilder = new VisionPortal.Builder()
-                .setCamera(webcam)
-                .addProcessor(aprilTag);
-
-        visionPortal = portalBuilder.build();
-        visionPortal.resumeStreaming();
-    }
-    private void updateAprilTagData() {
-        List<AprilTagDetection> detections = aprilTag.getDetections();
-        seenTagIds.clear();
-
-        for (AprilTagDetection det : detections) {
-            int id = det.id;
-            double distanceMeters = det.ftcPose.range;
-            idToDistanceMeters.put(id, distanceMeters);
-            if (!seenTagIds.contains(id)) {
-                seenTagIds.add(id);
-            }
-
-            if (id == 21) {
-                currentPattern = new char[]{'g', 'p', 'p'};
-            } else if (id == 22) {
-                currentPattern = new char[]{'p', 'g', 'p'};
-            } else if (id == 23) {
-                currentPattern = new char[]{'p', 'p', 'g'};
-            }
-            // ID 20 = blue alliance scoring, ID 24 = red alliance scoring
-        }
-    }
-
-    private void shutdownVision() {
-        if (visionPortal != null) {
-            visionPortal.stopStreaming();
-        }
     }
 }
