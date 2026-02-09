@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opModes;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+//Red
 @Autonomous(name="AutoDrive4MotorRotateRedShootBallWithoutCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode {
 
@@ -77,9 +77,9 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         rotateThirdLeft();
         shoot(4000);
         sleep(200);
-        rotateFixedTime(0.2875, 1);
+        rotateFixedTime(0.25, -1);
         sleep(200);
-        driveForwardFixedTime(1.1, 1);
+        driveForwardFixedTime(1.4, 1);
         stopDrive();
 
         // Standstill, keep updating AprilTag data
@@ -173,14 +173,13 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         setDrivePower(0.0);
     }
     private void rotateThirdRight(){
-
         carousel.setVelocity(900);
-        sleep(500);
+        sleep(400);
         carousel.setPower(0);
     }
     private void rotateThirdLeft(){
         carousel.setVelocity(-900);
-        sleep(500);
+        sleep(400);
         carousel.setPower(0);
     }
     private void setServoAngle(Servo s, double angleDeg) {
