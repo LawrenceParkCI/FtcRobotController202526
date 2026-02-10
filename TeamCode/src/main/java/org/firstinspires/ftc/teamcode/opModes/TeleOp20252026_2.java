@@ -39,15 +39,12 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private boolean intakeActive = false;
     private long currTimeIntake=0;
 
-    private int target = 0;
     //Shooter state
 
     private boolean servoActive = false;
     private boolean rpmShooterHold = false;
     private boolean shooterActive = false;
     private long currTimeShooter= 0;
-    //Carousel state
-    private long currPos = 0;
 
 
     private NormalizedColorSensor colorSensorFront;
@@ -229,15 +226,12 @@ public class TeleOp20252026_2 extends LinearOpMode {
         telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
         telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
         telemetry.addData("Target RPM Met?: ", targetMet);
-        telemetry.addData("Carousel Positon", carousel.getCurrentPosition());
-        telemetry.addData("Carousel Encoder Offset", carouselEncoderOffsetTickCount);
-        telemetry.addData("Carousel Power", carousel.getPower());
-        telemetry.addData("Carousel Active", rotateActive);
-        telemetry.addData("Last Position", currPos);
-        telemetry.addData("Target: ", target);
-        telemetry.addData("Carousel Delta", carousel.getCurrentPosition() - currPos);
         telemetry.addData("Carousel Target Degrees", getTargetDegrees());
         telemetry.addData("Carousel Target Tick Count", getTargetTickCount());
+        telemetry.addData("Carousel Positon (Ticks)", carousel.getCurrentPosition());
+        telemetry.addData("Carousel Encoder Offset", carouselEncoderOffsetTickCount);
+        telemetry.addData("Carousel Active", rotateActive);
+        telemetry.addData("Carousel Power", carousel.getPower());
         telemetry.addData("Carousel AMP", carousel.getCurrent(CurrentUnit.AMPS));
         telemetry.update();
     }
