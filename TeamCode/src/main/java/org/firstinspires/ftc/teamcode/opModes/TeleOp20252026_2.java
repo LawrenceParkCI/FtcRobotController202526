@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 
 import android.graphics.Color;
@@ -82,7 +82,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
      * Offset in encoder ticks to account for carousel motor position at start of match.
      * A user will manually re-set the offset by pressing the "mode" button. This defines ZERO for the encoder.
      */
-    private long shooterEncoderOffsetTickCount = 0;
+    private long carouselEncoderOffsetTickCount = 0;
 
     // //////////////////////////////////////
 
@@ -230,12 +230,14 @@ public class TeleOp20252026_2 extends LinearOpMode {
         telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
         telemetry.addData("Target RPM Met?: ", targetMet);
         telemetry.addData("Carousel Positon", carousel.getCurrentPosition());
+        telemetry.addData("Carousel Encoder Offset", carouselEncoderOffsetTickCount);
         telemetry.addData("Carousel Power", carousel.getPower());
         telemetry.addData("Carousel Active", rotateActive);
         telemetry.addData("Last Position", currPos);
         telemetry.addData("Target: ", target);
         telemetry.addData("Carousel Delta", carousel.getCurrentPosition() - currPos);
         telemetry.addData("Carousel Target Degrees", getTargetDegrees());
+        telemetry.addData("Carousel Target Tick Count", getTargetTickCount());
         telemetry.addData("Carousel AMP", carousel.getCurrent(CurrentUnit.AMPS));
         telemetry.update();
     }
@@ -271,7 +273,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private void moveCarousel() {
 
         // carousel encoder reset
-        if (gamepad2.options) {
+        if (gamepad2.back) {
             handleModeButton();
         }
 
@@ -315,9 +317,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
         } else {
             // we are rotating now...
-            carousel.setTargetPosition(getTargetTickCount());
+            carousel.setTargetPosition((int)getTargetTickCount());
             carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            carousel.setPower(0.5);
+            carousel.setVelocity(1000);
 
             // done or cancel invoked?
             if (!carousel.isBusy() || gamepad2.left_bumper) {
@@ -331,30 +333,31 @@ public class TeleOp20252026_2 extends LinearOpMode {
     }
 
     private void zeroEncoder() {
-        shooterEncoderOffsetTickCount = carousel.getCurrentPosition();
+        carouselEncoderOffsetTickCount = carousel.getCurrentPosition();
     }
 
     private void handleModeButton() {
         zeroEncoder();
     }
     private void handleDpadUp() {
-        carouselPositionIndex++;
+        carouselPositionIndex=(carouselPositionIndex+1)%CAROUSEL_POSITION_DEG.length;
+
     }
     private void handleDpadDown() {
-        carouselPositionIndex--;
+        carouselPositionIndex=(carouselPositionIndex + CAROUSEL_POSITION_DEG.length-1)%CAROUSEL_POSITION_DEG.length;
     }
     private void handleDpadLeft() {
-        carouselPositionIndex = carouselPositionIndex + 2;
+        carouselPositionIndex=(carouselPositionIndex+1)%CAROUSEL_POSITION_DEG.length;
     }
     private void handleDpadRight() {
-        carouselPositionIndex = carouselPositionIndex - 2;
+        carouselPositionIndex=(carouselPositionIndex + CAROUSEL_POSITION_DEG.length-2)%CAROUSEL_POSITION_DEG.length;
     }
     private int getTargetDegrees() {
         return CAROUSEL_POSITION_DEG[carouselPositionIndex];
     }
     private double getTargetTickCount() {
         double targetTickCount = (getTargetDegrees() / 360) * CAROUSEL_PPR;
-        return shooterEncoderOffsetTickCount + targetTickCount;
+        return carouselEncoderOffsetTickCount + targetTickCount;
     }
 
     private void setServoAngle(Servo s, double angleDeg) {
