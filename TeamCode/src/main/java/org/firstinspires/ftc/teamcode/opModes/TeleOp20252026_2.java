@@ -33,9 +33,11 @@ public class TeleOp20252026_2 extends LinearOpMode {
     // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
     private static final double SHOOTER_PPR = 28.0;
     // Carousel gearbox motor (99.5:1) -> ~2786.2 pulses per output shaft revolution.
-    private static final double CAROUSEL_PPR3rd = 2786.2/3;
-    private static double tol = 100.0;
-    private static final double CAROUSEL_PPR6th = 2786.2/6;
+    private static final double CAROUSEL_PPR = 2786.2;
+    private static final double CAROUSEL_PPR3rd = CAROUSEL_PPR/3;
+    private static double tol = 0.0;
+    private static int current = 0;
+    private static final double CAROUSEL_PPR6th = CAROUSEL_PPR/6;
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
@@ -151,86 +153,110 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
             doAll();
             // --- Carousel CONTROL (gamepad2) ---
-            double carouselPower = 0.0;
-            if (gamepad2.right_trigger > 0.05 && !rotateActive) {
-                carouselPower = -gamepad2.right_trigger/2; // backwards full
-            } else if (gamepad2.left_trigger > 0.05 && !rotateActive ) {
-                carouselPower = gamepad2.left_trigger/2; // forwards
-            } else if (!rotateActive) {
-                carouselPower = 0.0;
+            if(!rotateActive) {
+                manualCarousel();
             }
-            if(gamepad2.right_bumper){
-                carouselPower *= 0.3;
-            }
-            if(!rotateActive){
-                carousel.setPower(carouselPower);
-            }
-
 
             // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
             //DPad Right/Left -> ±120°
             int rotateDegree = 0;
             if (gamepad2.dpad_right && !rotateActive) {
-                rotateDegree = 120;
-                rotateActive = true;
-                required = CAROUSEL_PPR3rd;
-                currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos + required) - tol);
-                carousel.setTargetPosition(target);
-                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setVelocity(1000);
+                rotateCarousel(-2);
+//                rotateDegree = 120;
+//                rotateActive = true;
+//                required = CAROUSEL_PPR3rd;
+//                currPos = carousel.getCurrentPosition();
+//                target = (int)Math.round((currPos + required) - tol);
+//                carousel.setTargetPosition(target);
+//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                carousel.setVelocity(1000);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
-                rotateDegree = -120;
-                rotateActive = true;
-                required = CAROUSEL_PPR3rd;
-                currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos - required) + tol);
-                carousel.setTargetPosition(target);
-                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setVelocity(4000);
+                rotateCarousel(2);
+//                rotateDegree = -120;
+//                rotateActive = true;
+//                required = CAROUSEL_PPR3rd;
+//                currPos = carousel.getCurrentPosition();
+//                target = (int)Math.round((currPos - required) + tol);
+//                carousel.setTargetPosition(target);
+//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                carousel.setVelocity(1000);
             }
             if(gamepad2.dpad_up  && !rotateActive) {
-                rotateDegree = 60;
-                rotateActive = true;
-                required = CAROUSEL_PPR6th;
-                currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos + required) - tol);
-                carousel.setTargetPosition(target);
-                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setVelocity(4000);
+                rotateCarousel(-1);
+//                rotateDegree = 60;
+//                rotateActive = true;
+//                required = CAROUSEL_PPR6th;
+//                currPos = carousel.getCurrentPosition();
+//                target = (int)Math.round((currPos + required) - tol);
+//                carousel.setTargetPosition(target);
+//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                carousel.setVelocity(4000);
             }
             if(gamepad2.dpad_down  && !rotateActive){
-                rotateDegree = -60;
-                rotateActive = true;
-                required = CAROUSEL_PPR6th;
-                currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos - required) + tol);
-                carousel.setTargetPosition(target);
-                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setVelocity(4000);
+                rotateCarousel(1);
+//                rotateDegree = -60;
+//                rotateActive = true;
+//                required = CAROUSEL_PPR6th;
+//                currPos = carousel.getCurrentPosition();
+//                target = (int)Math.round((currPos - required) + tol);
+//                carousel.setTargetPosition(target);
+//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                carousel.setVelocity(4000);
             }
             // Check if move is complete
             if (rotateActive && !carousel.isBusy() ) {
                 rotateActive = false;
                 // Switch back so analog triggers still work
-                carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 carousel.setVelocity(0);
+                carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             }
             if(rotateActive && gamepad2.left_bumper){
                 rotateActive = false;
                 required = 0;
-                carousel.setPower(0);
+                carousel.setVelocity(0);
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+
+            if(current + tol > carousel.getCurrentPosition() && current + tol < carousel.getCurrentPosition()){
+                rotateActive = false;
+            }
+
             carouselAngleDeg += rotateDegree;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
 
             doAll();
         }
     }
+
+    public void rotateCarousel(int numRev){
+        int newPosition = (int) (numRev * CAROUSEL_PPR)/6 + current;
+        current = newPosition;
+        carousel.setTargetPosition(newPosition);
+        carousel.setTargetPositionTolerance(5);
+        carousel.setVelocity(2000);
+        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rotateActive = true;
+    }
+    private void manualCarousel() {
+        double carouselPower = 0.0;
+        if (gamepad2.right_trigger > 0.05 && !rotateActive) {
+            carouselPower = -gamepad2.right_trigger / 2; // backwards full
+        } else if (gamepad2.left_trigger > 0.05 && !rotateActive) {
+            carouselPower = gamepad2.left_trigger / 2; // forwards
+        } else if (!rotateActive) {
+            carouselPower = 0.0;
+        }
+        if (gamepad2.right_bumper) {
+            carouselPower *= 0.3;
+        }
+        if (!rotateActive) {
+            carousel.setPower(carouselPower);
+        }
+    }
+
     private void initHardware(){
         // --- Hardware mapping ---
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
