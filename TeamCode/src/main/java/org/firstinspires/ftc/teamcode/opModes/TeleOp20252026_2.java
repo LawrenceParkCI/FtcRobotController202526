@@ -14,7 +14,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
-import java.util.zip.CRC32;
 
 @TeleOp(name = "TeleOp20252026_2", group = "TeleOp")
 public class TeleOp20252026_2 extends LinearOpMode {
