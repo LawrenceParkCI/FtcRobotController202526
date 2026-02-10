@@ -99,7 +99,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
 
             drive();
 
-            manageCarousel();
+            moveCarousel();
 
             // --- INTAKE CONTROL on shooter (gamepad1) ---
             if(gamepad1.y && !intakeActive){
@@ -178,37 +178,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
             doAll();
 
-
-
         }
     }
 
-    private void zeroEncoder() {
-        shooterEncoderOffsetTickCount = carousel.getCurrentPosition();
-    }
-
-    private void handleModeButton() {
-        zeroEncoder();
-    }
-    private void dpadUp() {
-        carouselPositionIndex++;
-    }
-    private void dpadDown() {
-        carouselPositionIndex--;
-    }
-    private void dpadLeft() {
-        carouselPositionIndex = carouselPositionIndex + 2;
-    }
-    private void dpadRight() {
-        carouselPositionIndex = carouselPositionIndex - 2;
-    }
-    private int getTargetDegrees() {
-        return CAROUSEL_POSITION_DEG[carouselPositionIndex];
-    }
-    private double getTargetTickCount() {
-        double targetTickCount = (getTargetDegrees() / 360) * CAROUSEL_PPR;
-        return shooterEncoderOffsetTickCount + targetTickCount;
-    }
 
     private void initHardware(){
         // --- Hardware mapping ---
@@ -297,10 +269,10 @@ public class TeleOp20252026_2 extends LinearOpMode {
         rightBack.setPower(rb * speedLimit);
     }
 
-    private void manageCarousel() {
+    private void moveCarousel() {
 
         // carousel encoder reset
-        if (gamepad2.mode) {
+        if (gamepad2.options) {
             handleModeButton();
         }
 
@@ -327,26 +299,26 @@ public class TeleOp20252026_2 extends LinearOpMode {
         // jump mode
         if (!rotateActive) {
             if (gamepad2.dpad_right) {
-                dpadRight();
+                handleDpadRight();
                 rotateActive = true;
             }
             if (gamepad2.dpad_left ) {
-                dpadLeft();
+                handleDpadLeft();
                 rotateActive = true;
             }
             if(gamepad2.dpad_up ) {
-                dpadUp();
+                handleDpadUp();
                 rotateActive = true;
             }
             if(gamepad2.dpad_down){
-                dpadDown();
+                handleDpadDown();
                 rotateActive = true;
             }
         } else {
             // we are rotating now...
             carousel.setTargetPosition(getTargetTickCount());
             carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            carousel.setVelocity(4000);
+            carousel.setPower(0.5);
 
             // done or cancel invoked?
             if (!carousel.isBusy() || gamepad2.left_bumper) {
@@ -359,6 +331,32 @@ public class TeleOp20252026_2 extends LinearOpMode {
         }
     }
 
+    private void zeroEncoder() {
+        shooterEncoderOffsetTickCount = carousel.getCurrentPosition();
+    }
+
+    private void handleModeButton() {
+        zeroEncoder();
+    }
+    private void handleDpadUp() {
+        carouselPositionIndex++;
+    }
+    private void handleDpadDown() {
+        carouselPositionIndex--;
+    }
+    private void handleDpadLeft() {
+        carouselPositionIndex = carouselPositionIndex + 2;
+    }
+    private void handleDpadRight() {
+        carouselPositionIndex = carouselPositionIndex - 2;
+    }
+    private int getTargetDegrees() {
+        return CAROUSEL_POSITION_DEG[carouselPositionIndex];
+    }
+    private double getTargetTickCount() {
+        double targetTickCount = (getTargetDegrees() / 360) * CAROUSEL_PPR;
+        return shooterEncoderOffsetTickCount + targetTickCount;
+    }
 
     private void setServoAngle(Servo s, double angleDeg) {
         // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
