@@ -317,10 +317,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
         } else {
             // we are rotating now...
-            carousel.setTargetPosition((int)getTargetTickCount());
-            carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            carousel.setVelocity(1000);
-
+            setCarouselMotors();
             // done or cancel invoked?
             if (!carousel.isBusy() || gamepad2.left_bumper) {
                 rotateActive = false;
@@ -341,16 +338,19 @@ public class TeleOp20252026_2 extends LinearOpMode {
     }
     private void handleDpadUp() {
         carouselPositionIndex=(carouselPositionIndex+1)%CAROUSEL_POSITION_DEG.length;
-
+        setCarouselMotors();
     }
     private void handleDpadDown() {
         carouselPositionIndex=(carouselPositionIndex + CAROUSEL_POSITION_DEG.length-1)%CAROUSEL_POSITION_DEG.length;
+        setCarouselMotors();
     }
     private void handleDpadLeft() {
         carouselPositionIndex=(carouselPositionIndex+1)%CAROUSEL_POSITION_DEG.length;
+        setCarouselMotors();
     }
     private void handleDpadRight() {
         carouselPositionIndex=(carouselPositionIndex + CAROUSEL_POSITION_DEG.length-2)%CAROUSEL_POSITION_DEG.length;
+        setCarouselMotors();
     }
     private int getTargetDegrees() {
         return CAROUSEL_POSITION_DEG[carouselPositionIndex];
@@ -358,6 +358,12 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private double getTargetTickCount() {
         double targetTickCount = (getTargetDegrees() / 360) * CAROUSEL_PPR;
         return carouselEncoderOffsetTickCount + targetTickCount;
+    }
+    private void setCarouselMotors() {
+        carousel.setTargetPosition((int)getTargetTickCount());
+        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        carousel.setVelocity(1000);
+
     }
 
     private void setServoAngle(Servo s, double angleDeg) {
