@@ -39,78 +39,48 @@ public class ManualDrive4Motor_WithLowSpeed extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        telemetry.clearAll();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            // Read joysticks
-            double leftStickY = -gamepad1.left_stick_y; // forward is negative on gamepad, invert so up = positive
-            double leftStickX = gamepad1.left_stick_x;  // strafe
-            double rightStickX = -gamepad1.right_stick_x; // rotation
-
-            // Apply deadband
-            leftStickY = applyDeadband(leftStickY, JOYSTICK_DEADBAND);
-            leftStickX = applyDeadband(leftStickX, JOYSTICK_DEADBAND);
-            rightStickX = applyDeadband(rightStickX, JOYSTICK_DEADBAND);
-
-            // Low speed mode when right trigger touched (non-zero)
-            boolean lowSpeedMode = gamepad1.right_trigger > 0.01;
-
-            double maxSpeed = lowSpeedMode ? LOW_SPEED_MAX : FULL_SPEED_MAX;
-
-            // Mecanum drive math:
-            // drive = forward/back, strafe = left/right, twist = rotation
-            double drive = leftStickY;
-            double strafe = leftStickX;
-            double twist = rightStickX;
-
-            // Compute raw motor powers (standard mecanum wheel formula)
-            double lf = drive + strafe + twist; // leftFront
-            double lb = drive - strafe + twist; // leftBack
-            double rf = drive - strafe - twist; // rightFront
-            double rb = drive + strafe - twist; // rightBack
-
-            // Normalize so no value exceeds 1.0
-            double max = Math.max(
-                    Math.max(Math.abs(lf), Math.abs(lb)),
-                    Math.max(Math.abs(rf), Math.abs(rb))
-            );
-            if (max > 1.0) {
-                lf /= max;
-                lb /= max;
-                rf /= max;
-                rb /= max;
-            }
-
-            // Apply global speed cap
-            lf = lf * maxSpeed;
-            lb = lb * maxSpeed;
-            rf = rf * maxSpeed;
-            rb = rb * maxSpeed;
-
-            // Send to motors //adjust positve and negative depending on sign
-            leftFront.setPower(lf);
-            leftBack.setPower(lb);
-            rightFront.setPower(rf);
-            rightBack.setPower(rb);
-
-            // Telemetry for debugging
-            telemetry.addData("LowSpeed", lowSpeedMode);
-            telemetry.addData("MaxSpeed", "%.2f", maxSpeed);
-            telemetry.addData("LF", "%.2f", lf);
-            telemetry.addData("LB", "%.2f", lb);
-            telemetry.addData("RF", "%.2f", rf);
-            telemetry.addData("RB", "%.2f", rb);
+            drive();
+            telemetry.addData("LF",  leftFront.getPower());
+            telemetry.addData("LB",  leftBack.getPower());
+            telemetry.addData("RF", rightFront.getPower());
+            telemetry.addData("RB", rightBack.getPower());
             telemetry.update();
         }
     }
+    private void drive(){
+        // --- DRIVE CONTROL (gamepad1) ---
+        double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
+        double ly = -gamepad1.left_stick_y;   // left-stick up/down: forward/back
+        double rx = -gamepad1.right_stick_x;  // right-stick left/right: rotation
 
-    private double applyDeadband(double value, double deadband) {
-        if (Math.abs(value) < deadband) return 0.0;
-        // Scale to remove the deadband gap for smoother control
-        if (value > 0) return (value - deadband) / (1.0 - deadband);
-        else return (value + deadband) / (1.0 - deadband);
+        // Compute base motion powers
+        // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
+        double lf = ly + lx + rx;
+        double rf = ly - lx - rx;
+        double lb = ly - lx + rx;
+        double rb = ly + lx - rx;
+
+        // Normalize
+        lf = rangeClip(-lf, -1.0,1.0);
+        rf = rangeClip(-rf, -1.0,1.0);
+        lb = rangeClip(-lb, -1.0,1.0);
+        rb = rangeClip(-rb, -1.0,1.0);
+
+        // Low speed mode: RT on gamepad1 limits to 30%
+        double speedLimit = gamepad1.right_trigger > 0.05 ? 0.30 : 1.0;
+        leftFront.setPower(lf * speedLimit);
+        rightFront.setPower(rf * speedLimit);
+        leftBack.setPower(lb * speedLimit);
+        rightBack.setPower(rb * speedLimit);
+    }
+    private double rangeClip(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
     }
 }
