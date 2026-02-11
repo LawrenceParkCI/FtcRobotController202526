@@ -152,27 +152,20 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 servoActive = false;
             }
             doAll();
-            // --- Carousel CONTROL (gamepad2) ---
-            if(!rotateActive) {
-                manualCarousel();
+            // --- CAROUSEL CONTROL (gamepad2) ---
+            //reset current position
+            if(gamepad2.back){
+                current = carousel.getCurrentPosition();
             }
 
-            // --- CAROUSEL CONTROL (gamepad2) ---
             // Commands require waiting until the rotation is complete before processing next.
-            //DPad Right/Left -> ±120°
-            int rotateDegree = 0;
-            if (gamepad2.dpad_right && !rotateActive) {
-                rotateCarousel(-(int)CAROUSEL_PPR3rd);
+            //checks input from controller
+            if(!rotateActive) {
+                manualCarousel();
+                autoCarousel();
             }
-            if (gamepad2.dpad_left  && !rotateActive) {
-                rotateCarousel((int)CAROUSEL_PPR3rd);
-            }
-            if(gamepad2.dpad_up  && !rotateActive) {
-                rotateCarousel(-(int)CAROUSEL_PPR6th);
-            }
-            if(gamepad2.dpad_down  && !rotateActive){
-                rotateCarousel((int)CAROUSEL_PPR6th);
-            }
+
+
             // Check if move is complete
             if (rotateActive && !carousel.isBusy() ) {
                 rotateActive = false;
@@ -181,19 +174,15 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             }
+            //cancels rotate
             if(rotateActive && gamepad2.left_bumper){
                 rotateActive = false;
-//                required = 0;  //TODO - Do we need this?
                 carousel.setPower(0);
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
 
-//            if(current + tol > carousel.getCurrentPosition() && current + tol < carousel.getCurrentPosition()){
-//                rotateActive = false;
-//            }
-
-            carouselAngleDeg += rotateDegree;
-            carouselAngleDeg = normalizeAngle(carouselAngleDeg);
+//            carouselAngleDeg += rotateDegree;
+//            carouselAngleDeg = normalizeAngle(carouselAngleDeg);
 
             doAll();
         }
@@ -207,6 +196,21 @@ public class TeleOp20252026_2 extends LinearOpMode {
         carousel.setPower(0.8);
         carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rotateActive = true;
+    }
+    private void autoCarousel(){
+        //DPad Right/Left -> ±120°
+        if (gamepad2.dpad_right && !rotateActive) {
+            rotateCarousel(-(int)CAROUSEL_PPR3rd);
+        }
+        if (gamepad2.dpad_left  && !rotateActive) {
+            rotateCarousel((int)CAROUSEL_PPR3rd);
+        }
+        if(gamepad2.dpad_up  && !rotateActive) {
+            rotateCarousel(-(int)CAROUSEL_PPR6th);
+        }
+        if(gamepad2.dpad_down  && !rotateActive){
+            rotateCarousel((int)CAROUSEL_PPR6th);
+        }
     }
     private void manualCarousel() {
         double carouselPower = 0.0;
