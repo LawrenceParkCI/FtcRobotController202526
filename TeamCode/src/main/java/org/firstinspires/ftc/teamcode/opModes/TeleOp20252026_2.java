@@ -34,7 +34,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private static final double SHOOTER_PPR = 28.0;
     // Carousel gearbox motor (99.5:1) -> ~2786.2 pulses per output shaft revolution.
     private static final double CAROUSEL_PPR3rd = 2786.2/3;
-    private static double tol = 100.0;
+    private static int tol = 25;
     private static final double CAROUSEL_PPR6th = 2786.2/6;
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
@@ -151,20 +151,10 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
             doAll();
             // --- Carousel CONTROL (gamepad2) ---
-            double carouselPower = 0.0;
-            if (gamepad2.right_trigger > 0.05 && !rotateActive) {
-                carouselPower = -gamepad2.right_trigger/2; // backwards full
-            } else if (gamepad2.left_trigger > 0.05 && !rotateActive ) {
-                carouselPower = gamepad2.left_trigger/2; // forwards
-            } else if (!rotateActive) {
-                carouselPower = 0.0;
-            }
-            if(gamepad2.right_bumper){
-                carouselPower *= 0.3;
-            }
             if(!rotateActive){
-                carousel.setPower(carouselPower);
+                manualCarousel();
             }
+
 
 
             // --- CAROUSEL CONTROL (gamepad2) ---
@@ -176,18 +166,20 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 rotateActive = true;
                 required = CAROUSEL_PPR3rd;
                 currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos + required) - tol);
+                target = (int)Math.round((currPos + required));
                 carousel.setTargetPosition(target);
+                carousel.setTargetPositionTolerance(tol);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                carousel.setVelocity(1000);
+                carousel.setVelocity(4000);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
                 rotateDegree = -120;
                 rotateActive = true;
                 required = CAROUSEL_PPR3rd;
                 currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos - required) + tol);
+                target = (int)Math.round((currPos - required));
                 carousel.setTargetPosition(target);
+                carousel.setTargetPositionTolerance(tol);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 carousel.setVelocity(4000);
             }
@@ -196,8 +188,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 rotateActive = true;
                 required = CAROUSEL_PPR6th;
                 currPos = carousel.getCurrentPosition();
-                target = (int)Math.round((currPos + required) - tol);
+                target = (int)Math.round((currPos + required));
                 carousel.setTargetPosition(target);
+                carousel.setTargetPositionTolerance(tol);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 carousel.setVelocity(4000);
             }
@@ -208,6 +201,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
                 currPos = carousel.getCurrentPosition();
                 target = (int)Math.round((currPos - required) + tol);
                 carousel.setTargetPosition(target);
+                carousel.setTargetPositionTolerance(tol);
                 carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 carousel.setVelocity(4000);
             }
@@ -292,7 +286,22 @@ public class TeleOp20252026_2 extends LinearOpMode {
         telemetry.update();
     }
     // --- Helper methods ---
-
+    private void manualCarousel() {
+        double carouselPower = 0.0;
+        if (gamepad2.right_trigger > 0.05 && !rotateActive) {
+            carouselPower = -gamepad2.right_trigger / 2; // backwards full
+        } else if (gamepad2.left_trigger > 0.05 && !rotateActive) {
+            carouselPower = gamepad2.left_trigger / 2; // forwards
+        } else if (!rotateActive) {
+            carouselPower = 0.0;
+        }
+        if (gamepad2.right_bumper) {
+            carouselPower *= 0.3;
+        }
+        if (!rotateActive) {
+            carousel.setPower(carouselPower);
+        }
+    }
     private void drive(){
         // --- DRIVE CONTROL (gamepad1) ---
         double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
