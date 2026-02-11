@@ -249,7 +249,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
                     colorIntake= Arrays.copyOf(colorShoot, 3);
                 }
             }
-  
+
             carouselAngleDeg += rotateDegree;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
             if(rotateDegree == -60){
