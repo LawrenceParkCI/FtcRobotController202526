@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 
 import android.graphics.Color;
@@ -35,9 +35,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
     // Carousel gearbox motor (99.5:1) -> ~2786.2 pulses per output shaft revolution.
     private static final double CAROUSEL_PPR = 2786.2;
     private static final double CAROUSEL_PPR3rd = CAROUSEL_PPR/3;
+    private static final double CAROUSEL_PPR6th = CAROUSEL_PPR/6;
     private static double tol = 0.0;
     private static int current = 0;
-    private static final double CAROUSEL_PPR6th = CAROUSEL_PPR/6;
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
@@ -162,67 +162,35 @@ public class TeleOp20252026_2 extends LinearOpMode {
             //DPad Right/Left -> ±120°
             int rotateDegree = 0;
             if (gamepad2.dpad_right && !rotateActive) {
-                rotateCarousel(-2);
-//                rotateDegree = 120;
-//                rotateActive = true;
-//                required = CAROUSEL_PPR3rd;
-//                currPos = carousel.getCurrentPosition();
-//                target = (int)Math.round((currPos + required) - tol);
-//                carousel.setTargetPosition(target);
-//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                carousel.setVelocity(1000);
+                rotateCarousel(-(int)CAROUSEL_PPR3rd);
             }
             if (gamepad2.dpad_left  && !rotateActive) {
-                rotateCarousel(2);
-//                rotateDegree = -120;
-//                rotateActive = true;
-//                required = CAROUSEL_PPR3rd;
-//                currPos = carousel.getCurrentPosition();
-//                target = (int)Math.round((currPos - required) + tol);
-//                carousel.setTargetPosition(target);
-//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                carousel.setVelocity(1000);
+                rotateCarousel((int)CAROUSEL_PPR3rd);
             }
             if(gamepad2.dpad_up  && !rotateActive) {
-                rotateCarousel(-1);
-//                rotateDegree = 60;
-//                rotateActive = true;
-//                required = CAROUSEL_PPR6th;
-//                currPos = carousel.getCurrentPosition();
-//                target = (int)Math.round((currPos + required) - tol);
-//                carousel.setTargetPosition(target);
-//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                carousel.setVelocity(4000);
+                rotateCarousel(-(int)CAROUSEL_PPR6th);
             }
             if(gamepad2.dpad_down  && !rotateActive){
-                rotateCarousel(1);
-//                rotateDegree = -60;
-//                rotateActive = true;
-//                required = CAROUSEL_PPR6th;
-//                currPos = carousel.getCurrentPosition();
-//                target = (int)Math.round((currPos - required) + tol);
-//                carousel.setTargetPosition(target);
-//                carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                carousel.setVelocity(4000);
+                rotateCarousel((int)CAROUSEL_PPR6th);
             }
             // Check if move is complete
             if (rotateActive && !carousel.isBusy() ) {
                 rotateActive = false;
                 // Switch back so analog triggers still work
-                carousel.setVelocity(0);
+                carousel.setPower(0);
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             }
             if(rotateActive && gamepad2.left_bumper){
                 rotateActive = false;
-                required = 0;
-                carousel.setVelocity(0);
+//                required = 0;  //TODO - Do we need this?
+                carousel.setPower(0);
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
 
-            if(current + tol > carousel.getCurrentPosition() && current + tol < carousel.getCurrentPosition()){
-                rotateActive = false;
-            }
+//            if(current + tol > carousel.getCurrentPosition() && current + tol < carousel.getCurrentPosition()){
+//                rotateActive = false;
+//            }
 
             carouselAngleDeg += rotateDegree;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
@@ -231,12 +199,12 @@ public class TeleOp20252026_2 extends LinearOpMode {
         }
     }
 
-    public void rotateCarousel(int numRev){
-        int newPosition = (int) (numRev * CAROUSEL_PPR)/6 + current;
+    public void rotateCarousel(int amt){
+        int newPosition = (int) (amt) + current;
         current = newPosition;
         carousel.setTargetPosition(newPosition);
         carousel.setTargetPositionTolerance(5);
-        carousel.setVelocity(2000);
+        carousel.setPower(0.8);
         carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rotateActive = true;
     }
