@@ -14,6 +14,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
+import java.util.Arrays;
+
 @TeleOp(name = "TeleOp20252026_3", group = "TeleOp")
 public class TeleOp20252026_3 extends LinearOpMode {
     // Drive motors (Control Hub)
@@ -228,9 +230,41 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 carousel.setPower(0);
                 carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+            if(rotateDegree == 120 && mode ==1){
+                shiftRightByOne(colorIntake);
+            }else if(rotateDegree == 120 && mode ==2){
+                shiftRightByOne(colorShoot);
+            }
+            if(rotateDegree == -120 && mode ==1){
+                shiftLeftByOne(colorIntake);
+            }else if(rotateDegree == -120 && mode ==2){
+                shiftLeftByOne(colorShoot);
+            }
+            if(rotateDegree == 60 || rotateDegree == -60){
+                if(mode ==1){
+                    mode = 2;
+                    colorShoot = Arrays.copyOf(colorIntake, 3);
+                }else if(mode == 2){
+                    mode = 1;
+                    colorIntake= Arrays.copyOf(colorShoot, 3);
+                }
+            }
+  
             carouselAngleDeg += rotateDegree;
             carouselAngleDeg = normalizeAngle(carouselAngleDeg);
-
+            if(rotateDegree == -60){
+                if(mode == 1 && carouselAngleDeg%120 == 0){
+                    shiftLeftByOne(colorIntake);
+                }else if(mode ==2 && carouselAngleDeg%120 == 0){
+                    shiftLeftByOne(colorShoot);
+                }
+            }else if(rotateDegree == 60){
+                if(mode == 1 && carouselAngleDeg%120 == 0){
+                    shiftRightByOne(colorIntake);
+                }else if(mode ==2 && carouselAngleDeg%120 == 0){
+                    shiftRightByOne(colorShoot);
+                }
+            }
             doAll();
         }
     }
@@ -280,11 +314,11 @@ public class TeleOp20252026_3 extends LinearOpMode {
         telemetry.addData("Carousel Degree: ", carouselAngleDeg);
         if(mode ==1){
             telemetry.addData("ColorFront", front);
-            telemetry.addData("Intake:", colorIntake);
+            telemetry.addData("Intake pattern (Front, Other 1, Other 2) Clockwise:", colorIntake);
         }
         if(mode == 2){
             telemetry.addData("ColorBack", back);
-            telemetry.addData("Shoot:", colorShoot);
+            telemetry.addData("Shoot  (Other 1, Center, Other 2) Clockwise:", colorShoot);
         }
 
 
@@ -385,6 +419,12 @@ public class TeleOp20252026_3 extends LinearOpMode {
         }else if(mode == 2){
             back = 'a';
         }
+        if(mode == 1){
+            colorIntake[0] = front;
+        }
+        if(mode == 2){
+            colorShoot[1] = back;
+        }
 
     }
     private boolean isColorGreen(float[] hsv){
@@ -395,6 +435,23 @@ public class TeleOp20252026_3 extends LinearOpMode {
         double hue = hsv[0];
         return (hue >= 181 && hue <= 245);
     }
+    public static void shiftRightByOne(char[] a) {
+        int n = a.length;
+        char last = a[n - 1];
+        for (int i = n - 1; i > 0; i--) {
+            a[i] = a[i - 1];
+        }
+        a[0] = last;
+    }
+    public static void shiftLeftByOne(char[] a) {
+        int n = a.length;
+        char first = a[0];
+        for (int i = 0; i < n - 1; i++) {
+            a[i] = a[i + 1];
+        }
+        a[n - 1] = first;
+    }
+
     private void doAll(){
         updateDcMotorRPM();
         readColor();
