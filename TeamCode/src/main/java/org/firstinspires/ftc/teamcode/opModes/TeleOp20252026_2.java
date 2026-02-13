@@ -199,34 +199,34 @@ public class TeleOp20252026_2 extends LinearOpMode {
     }
     private void autoCarousel(){
         //DPad Right/Left -> ±120°
-        if (gamepad2.dpad_right && !rotateActive) {
+        if (gamepad2.dpad_right) {
             rotateCarousel(-(int)CAROUSEL_PPR3rd);
         }
-        if (gamepad2.dpad_left  && !rotateActive) {
+        if (gamepad2.dpad_left) {
             rotateCarousel((int)CAROUSEL_PPR3rd);
         }
-        if(gamepad2.dpad_up  && !rotateActive) {
+        if(gamepad2.dpad_up) {
             rotateCarousel(-(int)CAROUSEL_PPR6th);
         }
-        if(gamepad2.dpad_down  && !rotateActive){
+        if(gamepad2.dpad_down){
             rotateCarousel((int)CAROUSEL_PPR6th);
         }
     }
     private void manualCarousel() {
         double carouselPower = 0.0;
-        if (gamepad2.right_trigger > 0.05 && !rotateActive) {
+        if (gamepad2.right_trigger > 0.05) {
             carouselPower = -gamepad2.right_trigger / 2; // backwards full
-        } else if (gamepad2.left_trigger > 0.05 && !rotateActive) {
+            current = carousel.getCurrentPosition(); //changes the current position with the manual rotate 
+        } else if (gamepad2.left_trigger > 0.05) {
             carouselPower = gamepad2.left_trigger / 2; // forwards
-        } else if (!rotateActive) {
+            current = carousel.getCurrentPosition(); //changes the current position with the manual rotate 
+        } else {
             carouselPower = 0.0;
         }
         if (gamepad2.right_bumper) {
             carouselPower *= 0.3;
         }
-        if (!rotateActive) {
-            carousel.setPower(carouselPower);
-        }
+        carousel.setPower(carouselPower);
     }
 
     private void initHardware(){
