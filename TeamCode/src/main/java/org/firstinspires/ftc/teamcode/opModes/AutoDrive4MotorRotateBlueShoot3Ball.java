@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
 import android.graphics.Color;
-import android.os.Handler;
-import android.os.Looper;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -45,7 +43,8 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
     //Carousel rotation
-    private static final double one3rd = 2786.2/3;
+    private static final double CAROUSEL_PPR3rd = 2786.2/3;
+    private int current = 0;
     // Vision
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
@@ -275,7 +274,7 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         carousel.setPower(-1);
         while(true ){
             mainDo();
-            if(Math.abs(currPos  - carousel.getCurrentPosition()) >= one3rd){
+            if(Math.abs(currPos  - carousel.getCurrentPosition()) >= CAROUSEL_PPR3rd){
                 carousel.setPower(0);
                 break;
             }

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -38,6 +38,9 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
+    private int current = 0;
+    private static final double CAROUSEL_PPR = 2786.2;
+    private static final double CAROUSEL_PPR3rd = CAROUSEL_PPR/3;
     
 
 
@@ -157,14 +160,23 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         setDrivePower(0.0);
     }
     private void rotateThirdRight(){
-        carousel.setVelocity(900);
-        sleep(400);
+        rotateCarousel(-(int)CAROUSEL_PPR3rd);
+        while(carousel.isBusy());
         carousel.setPower(0);
     }
     private void rotateThirdLeft(){
-        carousel.setVelocity(-900);
-        sleep(400);
+        rotateCarousel((int)CAROUSEL_PPR3rd);
+        while(carousel.isBusy());
         carousel.setPower(0);
+    }
+
+    public void rotateCarousel(int amt){
+        int newPosition = (int) (amt) + current;
+        current = newPosition;
+        carousel.setTargetPosition(newPosition);
+        carousel.setTargetPositionTolerance(5);
+        carousel.setPower(0.8);
+        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     private void setServoAngle(Servo s, double angleDeg) {
         // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
