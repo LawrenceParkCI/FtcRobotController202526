@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opModes;
+package org.firstinspires.ftc.teamcode;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -147,6 +147,9 @@ public class TeleOp20252026 extends LinearOpMode {
             } else if (!rotateActive) {
                 carouselPower = 0.0;
             }
+            if(gamepad2.right_bumper){
+                carouselPower *= 0.3;
+            }
             if(!rotateActive){
                 carousel.setPower(carouselPower);
             }
@@ -185,7 +188,8 @@ public class TeleOp20252026 extends LinearOpMode {
                 carousel.setPower(-0.25);
             }
             if(rotateActive ){
-                if(Math.abs(carousel.getCurrentPosition() - currPos) >= required/2){
+                int offset = 500;
+                if(Math.abs(carousel.getCurrentPosition() - currPos) >= required - offset){
                     required = 0;
                     rotateActive = false;
                     carousel.setPower(0);
