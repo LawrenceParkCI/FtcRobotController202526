@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.control.Carousel;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -24,7 +25,8 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
     private DcMotor intake;
-    private DcMotorEx shooter, carousel;
+    private DcMotorEx shooter;
+    private Carousel carousel;
     // Smart servo
     private Servo pusher;
 
@@ -32,9 +34,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     private double currentRPM = 0.0;
     private double targetRPM = 0.0;
     private boolean targetMet = false;
-    private int current = 0;
-    private static final double CAROUSEL_PPR = 2786.2;
-    private static final double CAROUSEL_PPR3rd = CAROUSEL_PPR/3;
+
     // Encoder specs (from manufacturer data)
     // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
     private static final double SHOOTER_PPR = 28.0;
@@ -61,9 +61,11 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         driveForwardFixedTime(0.7, 1);
         sleep(200);
         shoot(4000);
-        rotateThirdLeft();
+        carousel.rotateThirdLeft();
+        while(!carousel.isFinished()){sleep(50);}
         shoot(4000);
-        rotateThirdLeft();
+        carousel.rotateThirdLeft();
+        while(!carousel.isFinished()){sleep(50);}
         shoot(4000);
         sleep(200);
         rotateFixedTime(0.25, 1);
@@ -83,7 +85,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        carousel = hardwareMap.get(DcMotorEx.class, "carousel");
+        carousel = new Carousel(Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 
@@ -114,10 +116,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0.0);
 
-        // Initialize carousel angle variable to 0 and ensure stopped
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
         // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
@@ -156,25 +154,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     }
     private void stopDrive() {
         setDrivePower(0.0);
-    }
-    private void rotateThirdRight(){
-        rotateCarousel(-(int)CAROUSEL_PPR3rd);
-        while(carousel.isBusy());
-        carousel.setPower(0);
-    }
-    private void rotateThirdLeft(){
-        rotateCarousel((int)CAROUSEL_PPR3rd);
-        while(carousel.isBusy());
-        carousel.setPower(0);
-    }
-
-    public void rotateCarousel(int amt){
-        int newPosition = (int) (amt) + current;
-        current = newPosition;
-        carousel.setTargetPosition(newPosition);
-        carousel.setTargetPositionTolerance(5);
-        carousel.setPower(0.8);
-        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     private void setServoAngle(Servo s, double angleDeg) {
