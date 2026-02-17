@@ -314,11 +314,11 @@ public class TeleOp20252026_3 extends LinearOpMode {
         telemetry.addData("Carousel Degree: ", carouselAngleDeg);
         if(mode ==1){
             telemetry.addData("ColorFront", front);
-            telemetry.addData("Intake pattern (Front, Other 1, Other 2) Clockwise:", colorIntake);
+            telemetry.addData("Intake pattern (Front, Other 1, Other 2) Clockwise:", Arrays.toString(colorIntake));
         }
         if(mode == 2){
             telemetry.addData("ColorBack", back);
-            telemetry.addData("Shoot  (Other 1, Center, Other 2) Clockwise:", colorShoot);
+            telemetry.addData("Shoot  (Other 1, Center, Other 2) Clockwise:", Arrays.toString(colorShoot));
         }
 
 
