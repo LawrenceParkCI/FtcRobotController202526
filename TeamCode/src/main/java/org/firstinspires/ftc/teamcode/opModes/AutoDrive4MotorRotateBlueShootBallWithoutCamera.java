@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.control.Carousel;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -19,15 +20,14 @@ import java.util.Map;
 //Blue
 @Autonomous(name="AutoDrive4MotorRotateBlueShootBallWithoutCamera", group="Autonomous")
 public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMode {
-
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
     private DcMotor intake;
-    private DcMotorEx shooter, carousel;
+    private DcMotorEx shooter;
+    Carousel carousel;
     // Smart servo
     private Servo pusher;
-
     // Shooter RPM tracking
     private double currentRPM = 0.0;
     private double targetRPM = 0.0;
@@ -38,15 +38,12 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
-
-
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
         telemetry.clearAll();
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
-
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
@@ -58,9 +55,11 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         driveForwardFixedTime(0.7, 1);
         sleep(200);
         shoot(4000);
-        rotateThirdLeft();
+        carousel.rotateThirdLeft();
+        while(!carousel.isFinished()){sleep(50);}
         shoot(4000);
-        rotateThirdLeft();
+        carousel.rotateThirdLeft();
+        while(!carousel.isFinished()){sleep(50);}
         shoot(4000);
         sleep(200);
         rotateFixedTime(0.25, 1);
@@ -80,7 +79,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        carousel = hardwareMap.get(DcMotorEx.class, "carousel");
+        carousel = new Carousel(Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 
@@ -110,11 +109,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
 
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0.0);
-
-        // Initialize carousel angle variable to 0 and ensure stopped
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
         // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
@@ -153,17 +147,6 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
     }
     private void stopDrive() {
         setDrivePower(0.0);
-    }
-    private void rotateThirdRight(){
-
-        carousel.setVelocity(900);
-        sleep(400);
-        carousel.setPower(0);
-    }
-    private void rotateThirdLeft(){
-        carousel.setVelocity(-900);
-        sleep(400);
-        carousel.setPower(0);
     }
     private void setServoAngle(Servo s, double angleDeg) {
         // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
