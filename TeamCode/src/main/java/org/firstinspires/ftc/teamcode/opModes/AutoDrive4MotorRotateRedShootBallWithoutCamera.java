@@ -56,15 +56,15 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         // Drive forward for total 3.1s
         driveForwardFixedTime(0.7, 1);
         sleep(200);
-        shoot(4000);
+        shoot(2500);
         carousel.rotateThirdLeft();
         while(!carousel.isFinished()){sleep(50);}
-        shoot(4000);
+        shoot(2500);
         carousel.rotateThirdLeft();
         while(!carousel.isFinished()){sleep(50);}
-        shoot(4000);
+        shoot(2500);
         sleep(200);
-        rotateFixedTime(0.25, -1);
+        rotateFixedTime(0.5, -1);
         sleep(200);
         driveForwardFixedTime(1.4, 1);
         stopDrive();
