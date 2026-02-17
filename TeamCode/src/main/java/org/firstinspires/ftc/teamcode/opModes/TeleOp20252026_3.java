@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opModes;
 
 import android.graphics.Color;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.control.Carousel;
 
@@ -51,8 +53,9 @@ public class TeleOp20252026_3 extends LinearOpMode {
     private long currTimeIntake=0;
     private static double tol = 100.0;
     private int target = 0;
-    //Shooter state
 
+
+    //Shooter state
     private boolean servoActive = false;
     private boolean rpmShooterHold = false;
     private boolean shooterActive = false;
@@ -181,6 +184,13 @@ public class TeleOp20252026_3 extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP
+        )));
+
         carousel = new Carousel(hardwareMap, Carousel.MANUAL);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
@@ -246,6 +256,18 @@ public class TeleOp20252026_3 extends LinearOpMode {
         double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
         double ly = -gamepad1.left_stick_y;   // left-stick up/down: forward/back
         double rx = -gamepad1.right_stick_x;  // right-stick left/right: rotation
+
+        if(gamepad1.bWasPressed()){
+            imu.resetYaw();
+        }
+        // Compute base motion powers
+        // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
+        double theta = Math.atan2(ly, lx);
+        double r = Math.hypot(lx, ly);
+
+        theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        ly = r * Math.sin(theta);
+        lx = r * Math.cos(theta);
 
         // Compute base motion powers
         // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
