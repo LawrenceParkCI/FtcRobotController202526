@@ -192,9 +192,6 @@ public class TeleOp20252026_2 extends LinearOpMode {
         } else {
             carouselPower = 0.0;
         }
-        if (gamepad2.right_bumper) {
-            carouselPower *= 0.3;
-        }
         carousel.move(carouselPower);
     }
 
