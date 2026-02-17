@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -26,6 +27,8 @@ public class TeleOp20252026_3 extends LinearOpMode {
     private DcMotorEx shooter;       // GoBilda 6000 RPM motor (1:1) with encoder
     // Servo
     private Servo pusher;            // multimode smart servo (angular mode), initialized to 0 degrees
+
+    private IMU imu;
 
     // Shooter RPM tracking
     private double currentRPM = 0.0;

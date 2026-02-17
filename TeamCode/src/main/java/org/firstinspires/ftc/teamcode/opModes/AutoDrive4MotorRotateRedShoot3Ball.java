@@ -17,6 +17,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +101,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
         pusher = hardwareMap.get(Servo.class, "pusher");
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -240,7 +241,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
 
         visionPortal = portalBuilder.build();
         visionPortal.resumeStreaming();
-        random();
+//        random();
     }
     private void updateAprilTagData() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -325,7 +326,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     }
     private void updateTelemetry(){
         telemetry.clearAll();
-        telemetry.addData("Pattern", currentPattern);
+        telemetry.addData("Pattern", Arrays.toString(currentPattern));
         telemetry.update();
     }
 }

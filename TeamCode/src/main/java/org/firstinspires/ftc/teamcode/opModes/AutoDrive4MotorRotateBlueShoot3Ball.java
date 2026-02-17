@@ -100,7 +100,7 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
         pusher = hardwareMap.get(Servo.class, "pusher");
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
