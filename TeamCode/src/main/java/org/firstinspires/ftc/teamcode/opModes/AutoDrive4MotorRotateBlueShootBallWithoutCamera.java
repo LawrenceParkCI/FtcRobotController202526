@@ -60,15 +60,15 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         // Drive forward for total 3.1s
         driveForwardFixedTime(0.7, 1);
         sleep(200);
-        shoot(4000);
+        shoot(2000);
         carousel.rotateThirdLeft();
         while(!carousel.isFinished()){sleep(50);}
-        shoot(4000);
+        shoot(2000);
         carousel.rotateThirdLeft();
         while(!carousel.isFinished()){sleep(50);}
-        shoot(4000);
+        shoot(2000);
         sleep(200);
-        rotateFixedTime(0.25, 1);
+        rotateFixedTime(0.5, 1);
         sleep(200);
         driveForwardFixedTime(1.4, 1);
         stopDrive();
@@ -85,7 +85,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        carousel = new Carousel(Carousel.AUTO);
+        carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 

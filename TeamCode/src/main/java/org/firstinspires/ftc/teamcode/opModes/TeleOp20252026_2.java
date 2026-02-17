@@ -201,7 +201,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
         //creates the carousel starting in manual mode
-        carousel = new Carousel(Carousel.MANUAL);
+        carousel = new Carousel(hardwareMap, Carousel.MANUAL);
 
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");

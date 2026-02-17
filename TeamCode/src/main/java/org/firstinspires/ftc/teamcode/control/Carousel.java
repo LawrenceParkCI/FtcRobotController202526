@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.teamcode.control;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Carousel {
 
@@ -23,11 +22,15 @@ public class Carousel {
     private static final double CAROUSEL_PPR6th = CAROUSEL_PPR/6;
     private boolean rotateActive = false;
 
+    //odd indexes are shooting positions
+    //even indexes are intake positions
+    private char[] balls = {'a', ' ', 'a', ' ', 'a', ' '};
 
-    public Carousel(int mode){
+
+    public Carousel(HardwareMap hardwareMap, int mode){
         carousel = hardwareMap.get(DcMotorEx.class, "carousel");
         carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setMode(mode);
+//        setMode(mode);
         carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         position = 0; // encoder is zeroed above
     }

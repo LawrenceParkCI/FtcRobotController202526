@@ -7,16 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.control.Carousel;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 //Red
 @Autonomous(name="AutoDrive4MotorRotateRedShootBallWithoutCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode {
@@ -89,7 +81,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        carousel = new Carousel(Carousel.AUTO);
+        carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
 
