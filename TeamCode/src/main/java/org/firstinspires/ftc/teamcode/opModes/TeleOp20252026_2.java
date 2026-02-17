@@ -157,7 +157,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
 
             // Check if move is complete or left_bumper pressed to cancel move
-            if (carousel.isFinished() || carousel.isRotateActive() && gamepad2.left_bumper) {
+            if (carousel.isFinished() || carousel.isRotateActive() && gamepad2.back) {
                 carousel.stop();
             }
 
