@@ -5,14 +5,13 @@ import android.graphics.Color;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.control.Carousel;
+import org.firstinspires.ftc.teamcode.control.Shooter;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -22,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 @Autonomous(name="AutoDrive4MotorRotateRedShoot3Ball", group="Autonomous")
 public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
@@ -30,24 +28,10 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
     private DcMotor intake;
-    private DcMotorEx shooter;
-    Carousel carousel;
-    // Smart servo
-    private Servo pusher;
+    private Shooter shooter;
+    private Carousel carousel;
     private NormalizedColorSensor colorSensor;
-    // Shooter RPM tracking
-    private double currentRPM = 0.0;
-    private double targetRPM = 0.0;
-    private boolean targetMet = false;
-    // Encoder specs (from manufacturer data)
-    // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
-    private static final double SHOOTER_PPR = 28.0;
-    // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
-    // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
-    private static final double SERVO_FULL_RANGE_DEG = 300.0;
-    //Carousel rotation
-    private static final double CAROUSEL_PPR3rd = 2786.2/3;
-    private int current = 0;
+
     // Vision
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
@@ -78,9 +62,10 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         }
         rotateFixedTime(0.7, 0.8);
 //        driveForwardFixedTimeandStop(0.5, -1);
-        for(idx = 0; idx <= 2; idx++){
-            shoot(2500);
-        }
+//        for(idx = 0; idx <= 2; idx++){
+//            shoot(2500);
+//        }
+        hardCodeShoot(2500);
         rotateFixedTime(0.5, -1);
         driveForwardFixedTimeandStop(1.4, 1);
 
@@ -101,8 +86,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
         carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
-        shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
-        pusher = hardwareMap.get(Servo.class, "pusher");
+        shooter  = new Shooter(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -117,15 +101,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         // Intake motor direction default
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // Shooter and carousel: set mode
-        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        // Initialize pusher servo to 0 degrees (calibrated start)
-        setServoAngle(pusher, 0.0);
-        // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
         // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
-        // Servo reference: Studica Multi-Mode Smart Servo (Standard Mode)
         // Alliance tags: ID 20 (blue scoring), ID 24 (red scoring)
     }
     private void driveForwardFixedTimeandStop(double seconds, double power) {
@@ -163,71 +139,66 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private void stopDrive() {
         setDrivePower(0.0);
     }
-    private void setServoAngle(Servo s, double angleDeg) {
-        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
-        double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
-        s.setPosition(pos);
+
+    /**
+     * Assumes green ball is preset in center spot
+     * @param RPM
+     */
+    private void hardCodeShoot(double RPM){
+
+        if(currentPattern[0] == 'g'){
+            for(int i = 0; i < 2; i++) {
+                shoot(RPM);
+                carousel.rotateThirdLeft();
+                while (!carousel.isFinished()){
+                    //TODO ensure still facing AprilTag on Goal
+                    mainDo();
+                }
+            }
+            shoot(RPM);
+        }
+        else if (currentPattern[1] == 'g') {
+            carousel.rotateThirdRight();
+            while (!carousel.isFinished()) ;
+            for(int i = 0; i < 2; i++) {
+                shoot(RPM);
+                carousel.rotateThirdLeft();
+                while (!carousel.isFinished()) {
+                    //TODO ensure still facing AprilTag on Goal
+                    mainDo();
+                }
+            }
+            shoot(RPM);
+        }
+        else {
+            for(int i = 0; i < 3; i++) {
+                carousel.rotateThirdLeft();
+                while (!carousel.isFinished()) {
+                    //TODO ensure still facing AprilTag on Goal
+                    mainDo();
+                }
+                shoot(RPM);
+            }
+        }
+
     }
-    private double RangeClip(double v, double min, double max) {
-        return Math.max(min, Math.min(max, v));
-    }
-    //Shoots at target rpm
+
     private void shoot(double RPM){
-        filter();
-        setShooterTargetRPM(RPM);
-        long currMilli = System.currentTimeMillis();
-        while (opModeIsActive() && !targetMet && (System.currentTimeMillis() - currMilli < 8000)) {
+        shooter.start(RPM);
+        while(!shooter.isTargetMet()){
+            //TODO ensure still facing AprilTag on Goal
             mainDo();
         }
-        setServoAngle(pusher, 80.0);
-        currMilli = System.currentTimeMillis();
+        shooter.push();
+
+        //pause 200 ms
+        long currMilli = System.currentTimeMillis();
         while(opModeIsActive() && System.currentTimeMillis() - currMilli < 200){
             mainDo();
         }
-        setServoAngle(pusher, 0.0);
-        while(opModeIsActive() && System.currentTimeMillis() - currMilli < 400){
-            mainDo();
-        }
-        setShooterTargetRPM(0);
-        mainDo();
+        shooter.stop();
     }
-    private void filter(){
-        char target = currentPattern[idx];
-        rotateCarouselUntilColor(target);
-    }
-    private void rotateCarouselUntilColor(char color){
-        int rotcount = 0;
-        while(true){
-            if(color == 'g' && isColorGreen()){
-                break;
-            }
-            if(color == 'p' && isColorPurple()){
-                break;
-            }
-            if(rotcount >= 6){
-                break;
-            }
-            rotcount++;
-            carousel.rotateThirdLeft();
-        }
-    }
-    private void setShooterTargetRPM(double desiredRPM) {
-        targetRPM = desiredRPM; // target minimum as specified
-        // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
-        // DcMotorEx allows setting velocity in ticks per second
-        shooter.setVelocity(ticksPerSec);
-        // Immediately after changing speed, update actual currentRPM from encoder
-        updateShooterRPM();
-        targetMet = (currentRPM >= targetRPM);
-    }
-    private void updateShooterRPM() {
-        //get ticks per second
-        double ticksPerSec = shooter.getVelocity();
-        //update current RPM ticksPerSec*RPM -> RPM
-        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
-        targetMet = (currentRPM >= targetRPM);
-    }
+
     private void initVision() {
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
         aprilTag = tagBuilder.build();
@@ -286,20 +257,22 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         double hue = hsv[0];
         return (hue >= 181 && hue <= 245);
     }
-    private void random(){
-        Random rand = new Random();
-        int id = rand.nextInt(3);
-        if (id == 0) {
-            currentPattern = new char[]{'g', 'p', 'p'};
-        } else if (id == 1) {
-            currentPattern = new char[]{'p', 'g', 'p'};
-        } else if (id == 2) {
-            currentPattern = new char[]{'p', 'p', 'g'};
-        }
-    }
+
+    //Don't need this??
+//    private void random(){
+//        Random rand = new Random();
+//        int id = rand.nextInt(3);
+//        if (id == 0) {
+//            currentPattern = new char[]{'g', 'p', 'p'};
+//        } else if (id == 1) {
+//            currentPattern = new char[]{'p', 'g', 'p'};
+//        } else if (id == 2) {
+//            currentPattern = new char[]{'p', 'p', 'g'};
+//        }
+//    }
     private void mainDo(){
         updateAprilTagData();
-        updateShooterRPM();
+        shooter.updateRPM();
         updateTelemetry();
     }
     private void updateTelemetry(){
@@ -307,4 +280,5 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         telemetry.addData("Pattern", Arrays.toString(currentPattern));
         telemetry.update();
     }
+
 }
