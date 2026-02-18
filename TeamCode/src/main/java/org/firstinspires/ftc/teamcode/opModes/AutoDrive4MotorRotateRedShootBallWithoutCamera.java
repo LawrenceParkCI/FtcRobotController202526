@@ -8,6 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.control.Carousel;
+import org.firstinspires.ftc.teamcode.control.Shooter;
+
+import java.util.Arrays;
 
 //Red
 @Autonomous(name="AutoDrive4MotorRotateRedShootBallWithoutCamera", group="Autonomous")
@@ -17,26 +20,8 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
     private DcMotor intake;
-    private DcMotorEx shooter;
-    Carousel carousel;
-    // Smart servo
-    private Servo pusher;
-
-    // Shooter RPM tracking
-    private double currentRPM = 0.0;
-    private double targetRPM = 0.0;
-    private boolean targetMet = false;
-    // Encoder specs (from manufacturer data)
-    // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
-    private static final double SHOOTER_PPR = 28.0;
-    // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
-    // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
-    private static final double SERVO_FULL_RANGE_DEG = 300.0;
-    private int current = 0;
-    private static final double CAROUSEL_PPR = 2786.2;
-    private static final double CAROUSEL_PPR3rd = CAROUSEL_PPR/3;
-    
-
+    private Shooter shooter;
+    private Carousel carousel;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -58,10 +43,10 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         sleep(200);
         shoot(2500);
         carousel.rotateThirdLeft();
-        while(!carousel.isFinished()){sleep(50);}
+        while(!carousel.isFinished() && opModeIsActive()){sleep(50);}
         shoot(2500);
         carousel.rotateThirdLeft();
-        while(!carousel.isFinished()){sleep(50);}
+        while(!carousel.isFinished() && opModeIsActive()){sleep(50);}
         shoot(2500);
         sleep(200);
         rotateFixedTime(0.5, -1);
@@ -83,9 +68,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
 
         carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
-        shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
-
-        pusher = hardwareMap.get(Servo.class, "pusher");
+        shooter  = new Shooter(hardwareMap);
 
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -102,15 +85,6 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         // Intake motor direction default
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Shooter and carousel: set mode
-        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-
-        // Initialize pusher servo to 0 degrees (calibrated start)
-        setServoAngle(pusher, 0.0);
 
         // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
         // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
@@ -150,46 +124,71 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
     private void stopDrive() {
         setDrivePower(0.0);
     }
-    private void setServoAngle(Servo s, double angleDeg) {
-        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
-        double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
-        s.setPosition(pos);
-    }
-    private double RangeClip(double v, double min, double max) {
-        return Math.max(min, Math.min(max, v));
-    }
+//    private void setServoAngle(Servo s, double angleDeg) {
+//        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
+//        double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
+//        s.setPosition(pos);
+//    }
+//    private double RangeClip(double v, double min, double max) {
+//        return Math.max(min, Math.min(max, v));
+//    }
     //Shoots at target rpm
+//    private void shoot(double RPM){
+//        setShooterTargetRPM(RPM);
+//        updateShooterRPM();
+//        long currMilli = System.currentTimeMillis();
+//        while (opModeIsActive() && !targetMet && (System.currentTimeMillis() - currMilli < 8000)) {
+//            updateShooterRPM();
+//        }
+//        sleep(500);
+//        setServoAngle(pusher, 80.0);
+//        sleep(200); // short wait to allow movement (adjust as needed)
+//        setServoAngle(pusher, 0.0);
+//        sleep(500);
+//        setShooterTargetRPM(0);
+//        updateShooterRPM();
+//    }
     private void shoot(double RPM){
-        setShooterTargetRPM(RPM);
-        updateShooterRPM();
-        long currMilli = System.currentTimeMillis();
-        while (opModeIsActive() && !targetMet && (System.currentTimeMillis() - currMilli < 8000)) {
-            updateShooterRPM();
+        shooter.start(RPM);
+        while(opModeIsActive() && !shooter.isTargetMet()){
+            //TODO ensure still facing AprilTag on Goal
+            mainDo();
         }
-        sleep(500);
-        setServoAngle(pusher, 80.0);
-        sleep(200); // short wait to allow movement (adjust as needed)
-        setServoAngle(pusher, 0.0);
-        sleep(500);
-        setShooterTargetRPM(0);
-        updateShooterRPM();
-    }
-    private void setShooterTargetRPM(double desiredRPM) {
-        targetRPM = desiredRPM; // target minimum as specified
-        // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
-        // DcMotorEx allows setting velocity in ticks per second
-        shooter.setVelocity(ticksPerSec);
-        // Immediately after changing speed, update actual currentRPM from encoder
-        updateShooterRPM();
-        targetMet = (currentRPM >= targetRPM);
-    }
+        shooter.push();
 
-    private void updateShooterRPM() {
-        //get ticks per second
-        double ticksPerSec = shooter.getVelocity();
-        //update current RPM ticksPerSec*RPM -> RPM
-        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
-        targetMet = (currentRPM >= targetRPM);
+        //pause 200 ms
+        long currMilli = System.currentTimeMillis();
+        while(opModeIsActive() && System.currentTimeMillis() - currMilli < 300){
+            mainDo();
+        }
+        shooter.stop();
+    }
+//    private void setShooterTargetRPM(double desiredRPM) {
+//        targetRPM = desiredRPM; // target minimum as specified
+//        // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
+//        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
+//        // DcMotorEx allows setting velocity in ticks per second
+//        shooter.setVelocity(ticksPerSec);
+//        // Immediately after changing speed, update actual currentRPM from encoder
+//        updateShooterRPM();
+//        targetMet = (currentRPM >= targetRPM);
+//    }
+//
+//    private void updateShooterRPM() {
+//        //get ticks per second
+//        double ticksPerSec = shooter.getVelocity();
+//        //update current RPM ticksPerSec*RPM -> RPM
+//        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
+//        targetMet = (currentRPM >= targetRPM);
+//    }
+
+    private void mainDo(){
+        shooter.updateRPM();
+        updateTelemetry();
+    }
+    private void updateTelemetry(){
+        telemetry.clearAll();
+        telemetry.addData("Shooter speed: ", shooter.getMotor().getVelocity());
+        telemetry.update();
     }
 }

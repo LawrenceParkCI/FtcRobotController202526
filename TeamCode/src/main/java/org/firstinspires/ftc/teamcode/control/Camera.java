@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.control;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -94,7 +95,7 @@ public class Camera {
     }
 
     public void  updateAprilTagData() {
-        List<AprilTagDetection> detections = aprilTag.getDetections();
+        detections = aprilTag.getDetections();
         seenTagIds.clear();
         idToDistanceMeters.clear();
         for (AprilTagDetection det : detections) {
@@ -119,6 +120,13 @@ public class Camera {
     public void shutdownVision() {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
+        }
+    }
+
+
+    public void display(Telemetry telemetry){
+        for (AprilTagDetection det : detections) {
+            telemetry.addData("ID: ", det.id);
         }
     }
 }

@@ -58,7 +58,7 @@ public class Carousel {
         position = newPosition;
         carousel.setTargetPosition(newPosition);
         carousel.setTargetPositionTolerance(5);
-        carousel.setPower(0.8);
+        carousel.setPower(1);
         carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rotateActive = true;
     }

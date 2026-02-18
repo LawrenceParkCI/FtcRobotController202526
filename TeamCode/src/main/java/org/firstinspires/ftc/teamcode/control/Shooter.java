@@ -115,4 +115,8 @@ public class Shooter {
         return pusherActive;
     }
 
+    public DcMotorEx getMotor(){
+        return shooter;
+    }
+
 }

@@ -2,13 +2,16 @@ package org.firstinspires.ftc.teamcode.opModes;
 
 import android.graphics.Color;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.control.Camera;
 import org.firstinspires.ftc.teamcode.control.Carousel;
 import org.firstinspires.ftc.teamcode.control.Shooter;
@@ -28,6 +31,8 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
 
     private char[] currentPattern;
 
+    IMU imu;
+
     private final int RED_GOAL_ID = 24;
     int idx = 0;
     @Override
@@ -44,9 +49,11 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         telemetry.clearAll();
         telemetry.update();
         driveForwardFixedTimeandStop(0.7, 1);
-        rotateUntilPattern(-0.8);
-        rotateUnitAprilTag(RED_GOAL_ID, 0.8);
+        imu.resetYaw();
+        rotateUntilPattern(-0.35);
+//        rotateUnitAprilTag(RED_GOAL_ID, 0.35);
         //driveForwardUntilDistance() ????????
+        rotateToZero(0.5);
 
         hardCodeShoot(2500);
         rotateFixedTime(0.5, -1);
@@ -74,6 +81,14 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter  = new Shooter(hardwareMap);
         camera = new Camera(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
+
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP
+        )));
+
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -111,8 +126,17 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         setRotatePower(power);
         //time is for backup in case it doesn't see the tag
-        while (!camera.isFacingTag(reqID) && opModeIsActive()
-                && (System.currentTimeMillis() - start) < 1000){
+        while (!camera.isFacingTag(reqID) && opModeIsActive()){
+//                && (System.currentTimeMillis() - start) < 1000){
+            mainDo();
+        }
+        stopDrive();
+    }
+
+    private void rotateToZero(double power){
+        setRotatePower(power);
+        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) < 0.1
+        && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) > -0.1)){
             mainDo();
         }
         stopDrive();
@@ -121,9 +145,12 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         setRotatePower(power);
         //time is for backup in case it doesn't see the tag
-        while ((currentPattern=camera.getPattern())[2] == 'a' && opModeIsActive()
-                && (System.currentTimeMillis() - start) < 1000){
+        currentPattern = camera.getPattern();
+
+        while ((currentPattern)[2] == 'a'){
+                //&& opModeIsActive() && (System.currentTimeMillis() - start) < 1000){
             mainDo();
+            currentPattern = camera.getPattern();
         }
         stopDrive();
     }
@@ -193,7 +220,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
 
     private void shoot(double RPM){
         shooter.start(RPM);
-        while(!shooter.isTargetMet()){
+        while(opModeIsActive() && !shooter.isTargetMet()){
             //TODO ensure still facing AprilTag on Goal
             mainDo();
         }
@@ -201,7 +228,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
 
         //pause 200 ms
         long currMilli = System.currentTimeMillis();
-        while(opModeIsActive() && System.currentTimeMillis() - currMilli < 200){
+        while(opModeIsActive() && System.currentTimeMillis() - currMilli < 300){
             mainDo();
         }
         shooter.stop();
@@ -236,7 +263,8 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         telemetry.clearAll();
         telemetry.addData("Pattern:", Arrays.toString(currentPattern));
         telemetry.addData("Distance to Goal:", camera.getDistance(RED_GOAL_ID));
-        telemetry.addData("Goal 22222222Position", camera.getFacing(RED_GOAL_ID));
+        telemetry.addData("Goal Position", camera.getFacing(RED_GOAL_ID));
+        camera.display(telemetry);
         telemetry.update();
     }
 
