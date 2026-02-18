@@ -61,6 +61,8 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private char front = 'a';
     private char back = 'a';
 
+    private boolean fieldDriveMode = true;
+
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
@@ -100,6 +102,11 @@ public class TeleOp20252026_2 extends LinearOpMode {
             // A limits max to 30%
             if (gamepad1.a) intakePower *= 0.30;
             intake.setPower(intakePower);
+
+            if (gamepad1.backWasReleased())
+                fieldDriveMode = !fieldDriveMode;
+
+
             // --- SHOOTER CONTROL with servo (gamepad2) ---
             // Buttons: X=1000 RPM, A=2500 RPM, B=4000 RPM, shoot and stop motor once done
             // When pressed, set motor velocity and update currentRPM and targetRPM logic.
@@ -265,18 +272,19 @@ public class TeleOp20252026_2 extends LinearOpMode {
         double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
         double ly = -gamepad1.left_stick_y;   // left-stick up/down: forward/back
         double rx = -gamepad1.right_stick_x;  // right-stick left/right: rotation
+        if(fieldDriveMode) {
+            if (gamepad1.bWasPressed()) {
+                imu.resetYaw();
+            }
+            // Compute base motion powers
+            // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
+            double theta = Math.atan2(ly, lx);
+            double r = Math.hypot(lx, ly);
 
-        if(gamepad1.bWasPressed()){
-            imu.resetYaw();
+            theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            ly = r * Math.sin(theta);
+            lx = r * Math.cos(theta);
         }
-        // Compute base motion powers
-        // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
-        double theta = Math.atan2(ly, lx);
-        double r = Math.hypot(lx, ly);
-
-        theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-        ly = r * Math.sin(theta);
-        lx = r * Math.cos(theta);
 
         // Compute base motion powers
         // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
