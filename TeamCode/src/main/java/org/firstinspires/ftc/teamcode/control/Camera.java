@@ -22,6 +22,7 @@ public class Camera {
     // Data structures
     private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
     private final List<Integer> seenTagIds = new ArrayList<>();
+    private List<AprilTagDetection> detections;
 
     public Camera(HardwareMap hardwareMap){
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
@@ -34,9 +35,10 @@ public class Camera {
 
         visionPortal = portalBuilder.build();
         visionPortal.resumeStreaming();
+
+        detections = new ArrayList<AprilTagDetection>();
     }
     public boolean isFacingTag(int reqID){
-        List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             double position = det.ftcPose.x;
             if(det.id == reqID && position > -cameraPositionTolerance && position < cameraPositionTolerance) {
@@ -49,7 +51,6 @@ public class Camera {
     }
 
     public double getFacing(int reqID){
-        List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             if(det.id == reqID)
                 return det.ftcPose.x;
@@ -64,7 +65,6 @@ public class Camera {
      * @return
      */
     public double getDistance(int reqID){
-        List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             if(det.id == reqID)
                 return det.ftcPose.range;
@@ -77,9 +77,9 @@ public class Camera {
      * @return
      */
     public char[]  getPattern() {
-        List<AprilTagDetection> detections = aprilTag.getDetections();
+        int id =0;
         for (AprilTagDetection det : detections) {
-            int id = det.id;
+            id = det.id;
 
             if (id == 21) {
                 return new char[]{'g', 'p', 'p'};
@@ -90,7 +90,7 @@ public class Camera {
             }
             // ID 20 = blue alliance scoring, ID 24 = red alliance scoring
         }
-        return null;
+        return new char[]{'a', 'a', (char)(id%10 + 97)};
     }
 
     public void  updateAprilTagData() {

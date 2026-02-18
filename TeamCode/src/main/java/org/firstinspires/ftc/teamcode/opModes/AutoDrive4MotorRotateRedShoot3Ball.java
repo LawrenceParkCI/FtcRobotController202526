@@ -111,7 +111,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         setRotatePower(power);
         //time is for backup in case it doesn't see the tag
-        while (!camera.isFacingTag(reqID) || opModeIsActive()
+        while (!camera.isFacingTag(reqID) && opModeIsActive()
                 && (System.currentTimeMillis() - start) < 1000){
             mainDo();
         }
@@ -121,7 +121,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         setRotatePower(power);
         //time is for backup in case it doesn't see the tag
-        while ((currentPattern=camera.getPattern())==null || opModeIsActive()
+        while ((currentPattern=camera.getPattern())[2] == 'a' && opModeIsActive()
                 && (System.currentTimeMillis() - start) < 1000){
             mainDo();
         }
@@ -236,7 +236,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         telemetry.clearAll();
         telemetry.addData("Pattern:", Arrays.toString(currentPattern));
         telemetry.addData("Distance to Goal:", camera.getDistance(RED_GOAL_ID));
-        telemetry.addData("Goal Position", camera.getFacing(RED_GOAL_ID));
+        telemetry.addData("Goal 22222222Position", camera.getFacing(RED_GOAL_ID));
         telemetry.update();
     }
 
