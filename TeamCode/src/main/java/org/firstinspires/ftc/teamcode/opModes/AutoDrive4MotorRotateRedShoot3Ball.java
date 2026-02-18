@@ -26,8 +26,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private Camera camera;
     private NormalizedColorSensor colorSensor;
 
-
-    private char[] currentPattern = new char[3];
+    private char[] currentPattern;
 
     private final int RED_GOAL_ID = 24;
     int idx = 0;
@@ -208,10 +207,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter.stop();
     }
 
-
-
-
-
     private float[] readColor(){
         // Read normalized RGBA values
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
@@ -232,18 +227,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         return (hue >= 181 && hue <= 245);
     }
 
-    //Don't need this??
-//    private void random(){
-//        Random rand = new Random();
-//        int id = rand.nextInt(3);
-//        if (id == 0) {
-//            currentPattern = new char[]{'g', 'p', 'p'};
-//        } else if (id == 1) {
-//            currentPattern = new char[]{'p', 'g', 'p'};
-//        } else if (id == 2) {
-//            currentPattern = new char[]{'p', 'p', 'g'};
-//        }
-//    }
     private void mainDo(){
         camera.updateAprilTagData();
         shooter.updateRPM();
@@ -251,7 +234,9 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     }
     private void updateTelemetry(){
         telemetry.clearAll();
-        telemetry.addData("Pattern", Arrays.toString(currentPattern));
+        telemetry.addData("Pattern:", Arrays.toString(currentPattern));
+        telemetry.addData("Distance to Goal:", camera.getDistance(RED_GOAL_ID));
+        telemetry.addData("Goal Position", camera.getFacing(RED_GOAL_ID));
         telemetry.update();
     }
 

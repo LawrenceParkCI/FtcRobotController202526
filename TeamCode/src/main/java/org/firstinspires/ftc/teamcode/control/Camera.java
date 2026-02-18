@@ -15,7 +15,7 @@ import java.util.Map;
 public class Camera {
 
 
-    int cameraPosittionTolerance = 5;
+    int cameraPositionTolerance = 5;
     // Vision
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
@@ -39,13 +39,22 @@ public class Camera {
         List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             double position = det.ftcPose.x;
-            if(det.id == reqID && position > -cameraPosittionTolerance && position < cameraPosittionTolerance) {
+            if(det.id == reqID && position > -cameraPositionTolerance && position < cameraPositionTolerance) {
                 return true;
             }
 
         }
 
         return false;
+    }
+
+    public double getFacing(int reqID){
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+        for (AprilTagDetection det : detections) {
+            if(det.id == reqID)
+                return det.ftcPose.x;
+        }
+        return -1;
     }
 
     /**
@@ -63,11 +72,14 @@ public class Camera {
             return -1;
     }
 
+    /**
+     * Finds the pattern on the obelisk.
+     * @return
+     */
     public char[]  getPattern() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             int id = det.id;
-            double distanceMeters = det.ftcPose.range;
 
             if (id == 21) {
                 return new char[]{'g', 'p', 'p'};
@@ -94,6 +106,14 @@ public class Camera {
             }
         }
 
+    }
+
+    public List<Integer> getSeenTagIds(){
+        return seenTagIds;
+    }
+
+    public Map<Integer, Double> getIdsToDistance(){
+        return idToDistanceMeters;
     }
 
     public void shutdownVision() {
