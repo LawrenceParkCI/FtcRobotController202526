@@ -51,12 +51,16 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         driveForwardFixedTimeandStop(0.7, 1);
         imu.resetYaw();
         rotateUntilPattern(-0.35);
-//        rotateUnitAprilTag(RED_GOAL_ID, 0.35);
-        //driveForwardUntilDistance() ????????
         rotateToZero(0.5);
 
         hardCodeShoot(2500);
-        rotateFixedTime(0.5, -1);
+        rotateFixedTime(0.45, -1);
+        long start = System.currentTimeMillis();
+        //time is for delay before backing up
+        while (opModeIsActive()
+                && (System.currentTimeMillis() - start) < 4000){
+            mainDo();
+        }
         driveForwardFixedTimeandStop(1.4, 1);
 
         // Standstill, keep updating AprilTag data
