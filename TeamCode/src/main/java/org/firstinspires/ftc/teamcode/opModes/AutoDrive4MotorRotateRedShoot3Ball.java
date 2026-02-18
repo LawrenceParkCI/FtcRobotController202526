@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.control.Carousel;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -29,7 +30,8 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
     private DcMotor intake;
-    private DcMotorEx shooter, carousel;
+    private DcMotorEx shooter;
+    Carousel carousel;
     // Smart servo
     private Servo pusher;
     private NormalizedColorSensor colorSensor;
@@ -68,19 +70,19 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
-        driveForwardFixedTimeandStop(1.45, 1);
-        rotateFixedTime(0.65, -1);
+        driveForwardFixedTimeandStop(0.7, 1);
+        rotateFixedTime(0.8, -0.8);
         long currMilli = System.currentTimeMillis();
         while(opModeIsActive() && System.currentTimeMillis() - currMilli < 200){
             mainDo();
         }
-        rotateFixedTime(0.65, 1);
-        driveForwardFixedTimeandStop(0.5, -1);
+        rotateFixedTime(0.7, 0.8);
+//        driveForwardFixedTimeandStop(0.5, -1);
         for(idx = 0; idx <= 2; idx++){
-            shoot(4000);
+            shoot(2500);
         }
-        rotateFixedTime(0.95, -1);
-        driveForwardFixedTimeandStop(2.0, 1);
+        rotateFixedTime(0.5, -1);
+        driveForwardFixedTimeandStop(1.4, 1);
 
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
@@ -97,7 +99,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
-        carousel = hardwareMap.get(DcMotorEx.class, "carousel");
+        carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
         pusher = hardwareMap.get(Servo.class, "pusher");
@@ -121,10 +123,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         // Initialize pusher servo to 0 degrees (calibrated start)
         setServoAngle(pusher, 0.0);
-        // Initialize carousel angle variable to 0 and ensure stopped
-        carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        carousel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
         // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
         // Servo reference: Studica Multi-Mode Smart Servo (Standard Mode)
@@ -210,7 +208,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
                 break;
             }
             rotcount++;
-            rotateThirdLeft();
+            carousel.rotateThirdLeft();
         }
     }
     private void setShooterTargetRPM(double desiredRPM) {
@@ -241,7 +239,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
 
         visionPortal = portalBuilder.build();
         visionPortal.resumeStreaming();
-//        random();
     }
     private void updateAprilTagData() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -269,25 +266,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         if (visionPortal != null) {
             visionPortal.stopStreaming();
         }
-    }
-    private void rotateThirdRight(){
-        rotateCarousel(-(int)CAROUSEL_PPR3rd);
-        while(carousel.isBusy());
-        carousel.setPower(0);
-    }
-    private void rotateThirdLeft(){
-        rotateCarousel((int)CAROUSEL_PPR3rd);
-        while(carousel.isBusy());
-        carousel.setPower(0);
-    }
-
-    public void rotateCarousel(int amt){
-        int newPosition = (int) (amt) + current;
-        current = newPosition;
-        carousel.setTargetPosition(newPosition);
-        carousel.setTargetPositionTolerance(5);
-        carousel.setPower(0.8);
-        carousel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     private float[] readColor(){
         // Read normalized RGBA values
