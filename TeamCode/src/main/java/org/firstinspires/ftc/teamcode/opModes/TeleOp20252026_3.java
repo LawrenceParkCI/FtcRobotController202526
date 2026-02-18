@@ -150,6 +150,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
                     servoActive = true;
                     currTimeShooter = System.currentTimeMillis();
                     setServoAngle(pusher, 80.0);
+                    colorIntake[1] = 'a';
                 }
 
             }
@@ -311,18 +312,60 @@ public class TeleOp20252026_3 extends LinearOpMode {
         }
 
         shift(rotateDegree);
+
+        if(gamepad2.rightStickButtonWasPressed()){
+            if(mode == 1){
+                rotateDegree = 60;
+                carousel.rotateSixthRight();
+                shift(rotateDegree);
+            }
+
+            if(colorIntake[1] == 'g'){
+
+            }else if(colorIntake[0] == 'g'){
+                rotateDegree = 120;
+                carousel.rotateThirdRight();
+                shift(rotateDegree);
+            }else if(colorIntake[2] == 'g'){
+                rotateDegree = -120;
+                carousel.rotateThirdLeft();
+                shift(rotateDegree);
+            }
+        }
+
+        if(gamepad2.leftStickButtonWasPressed()){
+            if (mode == 1) {
+                rotateDegree = 60;
+                carousel.rotateSixthRight();
+                shift(rotateDegree);
+            }
+
+            if(colorIntake[1] == 'p'){
+
+            }else if(colorIntake[0] == 'p'){
+                rotateDegree = 120;
+                carousel.rotateThirdRight();
+                shift(rotateDegree);
+            }else if(colorIntake[2] == 'p'){
+                rotateDegree = -120;
+                carousel.rotateThirdLeft();
+                shift(rotateDegree);
+            }
+        }
     }
 
     private void shift(int rotateDegree){
         if(rotateDegree == 120 && mode ==1){
             shiftRightByOne(colorIntake);
         }else if(rotateDegree == 120 && mode ==2){
+            shiftRightByOne(colorIntake);
             shiftRightByOne(colorShoot);
         }
         if(rotateDegree == -120 && mode ==1){
             shiftLeftByOne(colorIntake);
         }else if(rotateDegree == -120 && mode ==2){
             shiftLeftByOne(colorShoot);
+            shiftLeftByOne(colorIntake);
         }
         if(rotateDegree == 60 || rotateDegree == -60){
             if(mode ==1){
@@ -330,12 +373,12 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 colorShoot = Arrays.copyOf(colorIntake, 3);
             }else if(mode == 2){
                 mode = 1;
-                colorIntake= Arrays.copyOf(colorShoot, 3);
+                //colorIntake= Arrays.copyOf(colorShoot, 3);
             }
         }
 
         carouselAngleDeg += rotateDegree;
-        carouselAngleDeg = normalizeAngle(carouselAngleDeg);
+        // carouselAngleDeg = normalizeAngle(carouselAngleDeg);
         if(rotateDegree == -60){
             if(mode == 1 && carouselAngleDeg%120 == 0){
                 shiftLeftByOne(colorIntake);
@@ -343,12 +386,14 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 shiftLeftByOne(colorShoot);
             }
         }else if(rotateDegree == 60){
-            if(mode == 1 && carouselAngleDeg%120 == 0){
+            if(mode == 1 && carouselAngleDeg%120 != 0){
                 shiftRightByOne(colorIntake);
-            }else if(mode ==2 && carouselAngleDeg%120 == 0){
+            }else if(mode ==2 && carouselAngleDeg%120 != 0){
                 shiftRightByOne(colorShoot);
+                shiftRightByOne(colorIntake);
             }
         }
+
     }
     private void manualCarouselControls() {
         double carouselPower = 0.0;
@@ -387,6 +432,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
         //update current RPM ticksPerSec*RPM -> RPM
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
         targetMet = currentRPM >= targetRPM;
+
     }
     private int normalizeAngle(int a) {
         int v = a % 360;
@@ -417,6 +463,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
         }else if(mode == 2){
             back = 'a';
         }
+
         if(mode == 1){
             colorIntake[0] = front;
         }
