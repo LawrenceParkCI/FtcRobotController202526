@@ -9,18 +9,11 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.control.Camera;
 import org.firstinspires.ftc.teamcode.control.Carousel;
 import org.firstinspires.ftc.teamcode.control.Shooter;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Autonomous(name="AutoDrive4MotorRotateRedShoot3Ball", group="Autonomous")
 public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
@@ -30,41 +23,31 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private DcMotor intake;
     private Shooter shooter;
     private Carousel carousel;
+    private Camera camera;
     private NormalizedColorSensor colorSensor;
 
-    // Vision
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTag;
-    // Data structures
-    private final Map<Integer, Double> idToDistanceMeters = new HashMap<>();
-    private final List<Integer> seenTagIds = new ArrayList<>();
-    private char[] currentPattern = new char[3];
+    private char[] currentPattern;
+
+    private final int RED_GOAL_ID = 24;
     int idx = 0;
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
-        initVision();
         telemetry.clearAll();
         telemetry.addLine("Ready. Press Play to start.");
         telemetry.update();
         if (isStopRequested()) {
-            shutdownVision();
+            camera.shutdownVision();
             return;
         }
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
         driveForwardFixedTimeandStop(0.7, 1);
-        rotateFixedTime(0.8, -0.8);
-        long currMilli = System.currentTimeMillis();
-        while(opModeIsActive() && System.currentTimeMillis() - currMilli < 200){
-            mainDo();
-        }
-        rotateFixedTime(0.7, 0.8);
-//        driveForwardFixedTimeandStop(0.5, -1);
-//        for(idx = 0; idx <= 2; idx++){
-//            shoot(2500);
-//        }
+        rotateUntilPattern(-0.8);
+        rotateUnitAprilTag(RED_GOAL_ID, 0.8);
+        //driveForwardUntilDistance() ????????
+
         hardCodeShoot(2500);
         rotateFixedTime(0.5, -1);
         driveForwardFixedTimeandStop(1.4, 1);
@@ -72,12 +55,14 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
             if (isStopRequested()) {
-                shutdownVision();
+                camera.shutdownVision();
                 return;
             }
         }
-        shutdownVision();
+        camera.shutdownVision();
     }
+
+
     private void initHardware() {
         // --- Hardware mapping ---
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
@@ -87,6 +72,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = new Shooter(hardwareMap);
+        camera = new Camera(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -119,6 +105,28 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         rightFront.setPower(p);
         rightBack.setPower(p);
     }
+
+
+    private void rotateUnitAprilTag(int reqID, double power) {
+        long start = System.currentTimeMillis();
+        setRotatePower(power);
+        //time is for backup in case it doesn't see the tag
+        while (!camera.isFacingTag(reqID) || opModeIsActive()
+                && (System.currentTimeMillis() - start) < 1000){
+            mainDo();
+        }
+        stopDrive();
+    }
+    private void rotateUntilPattern(double power){
+        long start = System.currentTimeMillis();
+        setRotatePower(power);
+        //time is for backup in case it doesn't see the tag
+        while ((currentPattern=camera.getPattern())==null || opModeIsActive()
+                && (System.currentTimeMillis() - start) < 1000){
+            mainDo();
+        }
+        stopDrive();
+    }
     //CCW - negative
     //CW - positive;
     private void rotateFixedTime(double seconds, double power) {
@@ -146,18 +154,17 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
      */
     private void hardCodeShoot(double RPM){
 
-        if(currentPattern[0] == 'g'){
-            for(int i = 0; i < 2; i++) {
-                shoot(RPM);
+        if(currentPattern!=null && currentPattern[2] == 'g'){
+            for(int i = 0; i < 3; i++) {
                 carousel.rotateThirdLeft();
-                while (!carousel.isFinished()){
+                while (!carousel.isFinished()) {
                     //TODO ensure still facing AprilTag on Goal
                     mainDo();
                 }
+                shoot(RPM);
             }
-            shoot(RPM);
         }
-        else if (currentPattern[1] == 'g') {
+        else if (currentPattern != null && currentPattern[1] == 'g') {
             carousel.rotateThirdRight();
             while (!carousel.isFinished()) ;
             for(int i = 0; i < 2; i++) {
@@ -171,14 +178,15 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
             shoot(RPM);
         }
         else {
-            for(int i = 0; i < 3; i++) {
+            for(int i = 0; i < 2; i++) {
+                shoot(RPM);
                 carousel.rotateThirdLeft();
-                while (!carousel.isFinished()) {
+                while (!carousel.isFinished()){
                     //TODO ensure still facing AprilTag on Goal
                     mainDo();
                 }
-                shoot(RPM);
             }
+            shoot(RPM);
         }
 
     }
@@ -199,45 +207,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter.stop();
     }
 
-    private void initVision() {
-        AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder();
-        aprilTag = tagBuilder.build();
-
-        WebcamName webcam = hardwareMap.get(WebcamName.class, "Webcam 1");
-        VisionPortal.Builder portalBuilder = new VisionPortal.Builder()
-                .setCamera(webcam)
-                .addProcessor(aprilTag);
-
-        visionPortal = portalBuilder.build();
-        visionPortal.resumeStreaming();
-    }
-    private void updateAprilTagData() {
-        List<AprilTagDetection> detections = aprilTag.getDetections();
-        seenTagIds.clear();
-        idToDistanceMeters.clear();
-        for (AprilTagDetection det : detections) {
-            int id = det.id;
-            double distanceMeters = det.ftcPose.range;
-            idToDistanceMeters.put(id, distanceMeters);
-            if (!seenTagIds.contains(id)) {
-                seenTagIds.add(id);
-            }
-
-            if (id == 21) {
-                currentPattern = new char[]{'g', 'p', 'p'};
-            } else if (id == 22) {
-                currentPattern = new char[]{'p', 'g', 'p'};
-            } else if (id == 23) {
-                currentPattern = new char[]{'p', 'p', 'g'};
-            }
-            // ID 20 = blue alliance scoring, ID 24 = red alliance scoring
-        }
-    }
-    private void shutdownVision() {
-        if (visionPortal != null) {
-            visionPortal.stopStreaming();
-        }
-    }
     private float[] readColor(){
         // Read normalized RGBA values
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
@@ -258,26 +227,16 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         return (hue >= 181 && hue <= 245);
     }
 
-    //Don't need this??
-//    private void random(){
-//        Random rand = new Random();
-//        int id = rand.nextInt(3);
-//        if (id == 0) {
-//            currentPattern = new char[]{'g', 'p', 'p'};
-//        } else if (id == 1) {
-//            currentPattern = new char[]{'p', 'g', 'p'};
-//        } else if (id == 2) {
-//            currentPattern = new char[]{'p', 'p', 'g'};
-//        }
-//    }
     private void mainDo(){
-        updateAprilTagData();
+        camera.updateAprilTagData();
         shooter.updateRPM();
         updateTelemetry();
     }
     private void updateTelemetry(){
         telemetry.clearAll();
-        telemetry.addData("Pattern", Arrays.toString(currentPattern));
+        telemetry.addData("Pattern:", Arrays.toString(currentPattern));
+        telemetry.addData("Distance to Goal:", camera.getDistance(RED_GOAL_ID));
+        telemetry.addData("Goal Position", camera.getFacing(RED_GOAL_ID));
         telemetry.update();
     }
 
