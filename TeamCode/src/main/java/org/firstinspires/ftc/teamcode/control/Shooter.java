@@ -32,7 +32,6 @@ public class Shooter {
 
     private boolean shooterActive;
     private boolean pusherActive;
-    private boolean rpmShooterHold;
 
     // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
     // Servo reference: Studica Multi-Mode Smart Servo (Standard Mode)
@@ -95,7 +94,6 @@ public class Shooter {
     }
 
     public void push(){
-        rpmShooterHold = true;
         pusherActive = true;
         setPusherAngle(80.0);
     }
@@ -120,7 +118,7 @@ public class Shooter {
         return shooter;
     }
 
-    public Object getTargetRPM() {
+    public double getTargetRPM() {
         return targetRPM;
     }
 }

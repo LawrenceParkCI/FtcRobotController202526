@@ -1,18 +1,15 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -27,8 +24,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
     private DcMotor intake;          // Tetrix
     private Shooter shooter;       // GoBilda 6000 RPM motor (1:1) with encoder
 
+    //Gyro for field oriented driving.
     private IMU imu;
-
+    private boolean fieldDriveMode = true;
 
     //Intake State
     private boolean intakeActive = false;
@@ -37,14 +35,6 @@ public class TeleOp20252026_2 extends LinearOpMode {
     //Shooter state
     private long currTimeShooter= 0;
 
-
-    private NormalizedColorSensor colorSensorFront;
-    private NormalizedColorSensor colorSensorBack;
-
-    private char front = 'a';
-    private char back = 'a';
-
-    private boolean fieldDriveMode = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -198,8 +188,6 @@ public class TeleOp20252026_2 extends LinearOpMode {
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = new Shooter(hardwareMap);
 
-        colorSensorFront = hardwareMap.get(NormalizedColorSensor.class, "colorSensorFront");
-        colorSensorBack = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -218,10 +206,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
 
     }
 
+    @SuppressLint("DefaultLocale")
     private void updateTelemetry(){
         telemetry.clearAll();
-        telemetry.addData("ColorFront", front);
-        telemetry.addData("ColorBack", back);
         telemetry.addData("Current Shooter RPM:", shooter.getCurrentRPM());
         telemetry.addData("Current Target RPM:", String.format("%.1f", shooter.getTargetRPM()));
         telemetry.addData("Current Amperage ", shooter.getMotor().getCurrent(CurrentUnit.AMPS));
@@ -280,45 +267,6 @@ public class TeleOp20252026_2 extends LinearOpMode {
         return Math.max(min, Math.min(max, v));
     }
 
-    private int normalizeAngle(int a) {
-        int v = a % 360;
-        if (v < 0) v += 360.0;
-        return v;
-    }
-    private void readColor(){
-        // Read normalized RGBA values
-        NormalizedRGBA colorsfront = colorSensorFront.getNormalizedColors();
-        float[] hsv1 = new float[3];
-        // Convert to HSV
-        Color.colorToHSV(colorsfront.toColor(), hsv1);
-        NormalizedRGBA colorsBack = colorSensorBack.getNormalizedColors();
-        float[] hsv2 = new float[3];
-        // Convert to HSV
-        Color.colorToHSV(colorsBack.toColor(), hsv2);
-        if(isColorGreen(hsv1)){
-            front = 'g';
-        } else if(isColorPurple(hsv1)){
-            front = 'p';
-        }else{
-            front = 'a';
-        }
-        if(isColorGreen(hsv2)){
-            back = 'g';
-        } else if(isColorPurple(hsv2)){
-            back = 'p';
-        }else{
-            back = 'a';
-        }
-
-    }
-    private boolean isColorGreen(float[] hsv){
-        double hue = hsv[0];
-        return (hue >= 120 && hue <= 180);
-    }
-    private boolean isColorPurple(float[] hsv){
-        double hue = hsv[0];
-        return (hue >= 181 && hue <= 245);
-    }
     private void doAll(){
         shooter.updateRPM();
         updateTelemetry();

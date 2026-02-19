@@ -1,18 +1,17 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -35,14 +34,13 @@ public class TeleOp20252026_3 extends LinearOpMode {
     //Intake State
     private boolean intakeActive = false;
     private long currTimeIntake=0;
-    private int target = 0;
 
     private long currTimeShooter;
     //Carousel state
-    private boolean rotateActive = false;
-    private long currPos = 0;
+//    private boolean rotateActive = false;
+//    private long currPos = 0;
 
-    private double required = 0;
+//    private double required = 0;
 
     private NormalizedColorSensor colorSensorFront;
     private NormalizedColorSensor colorSensorBack;
@@ -192,6 +190,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
+    @SuppressLint("DefaultLocale")
     private void updateTelemetry(){
         telemetry.clearAll();
         telemetry.addData("Carousel Degree: ", carouselAngleDeg);
@@ -211,11 +210,9 @@ public class TeleOp20252026_3 extends LinearOpMode {
         telemetry.addData("Target RPM Met?: ", shooter.isTargetMet());
         telemetry.addData("Carousel Positon", carousel.getMotor().getCurrentPosition());
         telemetry.addData("Carousel Power", carousel.getMotor().getPower());
-        telemetry.addData("Carousel Active", rotateActive);
-        telemetry.addData("Last Position", currPos);
-        telemetry.addData("Target: ", target);
-        telemetry.addData("Carousel Delta", carousel.getMotor().getCurrentPosition() - currPos);
-        telemetry.addData("Carousel Required", required);
+        telemetry.addData("Carousel Active", carousel.isRotateActive());
+        telemetry.addData("Last Position", carousel.getPosition());
+        telemetry.addData("Carousel Delta", carousel.getMotor().getCurrentPosition() - carousel.getPosition());
         telemetry.addData("Carousel AMP", carousel.getMotor().getCurrent(CurrentUnit.AMPS));
         telemetry.update();
     }
@@ -295,9 +292,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 shift(rotateDegree);
             }
 
-            if(colorIntake[1] == 'g'){
-
-            }else if(colorIntake[0] == 'g'){
+            if(colorIntake[0] == 'g'){
                 rotateDegree = 120;
                 carousel.rotateThirdRight();
                 shift(rotateDegree);
@@ -306,6 +301,8 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 carousel.rotateThirdLeft();
                 shift(rotateDegree);
             }
+            //if(colorIntake[1] == 'g') do nothing
+
         }
 
         if(gamepad2.leftStickButtonWasPressed()){
@@ -315,9 +312,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 shift(rotateDegree);
             }
 
-            if(colorIntake[1] == 'p'){
-
-            }else if(colorIntake[0] == 'p'){
+            if(colorIntake[0] == 'p'){
                 rotateDegree = 120;
                 carousel.rotateThirdRight();
                 shift(rotateDegree);
@@ -326,6 +321,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 carousel.rotateThirdLeft();
                 shift(rotateDegree);
             }
+            //if(colorIntake[1] == 'p') do nothing
         }
     }
 

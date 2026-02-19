@@ -45,9 +45,7 @@ public class Camera {
             if(det.id == reqID && position > -cameraPositionTolerance && position < cameraPositionTolerance) {
                 return true;
             }
-
         }
-
         return false;
     }
 
@@ -62,8 +60,8 @@ public class Camera {
     /**
      * Gives the distance to the required ID tag. Returns -1 if the
      * specified April Tag is not found.
-     * @param reqID
-     * @return
+     * @param reqID the ID we are looking for
+     * @return the distance from the tag, or -1 if not found
      */
     public double getDistance(int reqID){
         for (AprilTagDetection det : detections) {
@@ -75,7 +73,7 @@ public class Camera {
 
     /**
      * Finds the pattern on the obelisk.
-     * @return
+     * @return a char array with the pattern found
      */
     public char[]  getPattern() {
         int id =0;

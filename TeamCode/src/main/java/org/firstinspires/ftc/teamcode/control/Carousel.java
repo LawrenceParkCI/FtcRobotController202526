@@ -22,15 +22,9 @@ public class Carousel {
     private static final double CAROUSEL_PPR6th = CAROUSEL_PPR/6;
     private boolean rotateActive = false;
 
-    //odd indexes are shooting positions
-    //even indexes are intake positions
-    private char[] balls = {'a', ' ', 'a', ' ', 'a', ' '};
-
-
     public Carousel(HardwareMap hardwareMap, int mode){
         carousel = hardwareMap.get(DcMotorEx.class, "carousel");
         carousel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        setMode(mode);
         carousel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         position = 0; // encoder is zeroed above
     }
@@ -108,9 +102,6 @@ public class Carousel {
      * the rotation wasn't active at all or is still turning
      */
     public boolean isFinished(){
-        if (rotateActive && !carousel.isBusy()){
-            return true;
-        }
-        return false;
+        return rotateActive && !carousel.isBusy();
     }
 }
