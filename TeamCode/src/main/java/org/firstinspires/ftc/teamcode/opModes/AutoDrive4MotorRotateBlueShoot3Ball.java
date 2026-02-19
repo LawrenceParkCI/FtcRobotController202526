@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-@Autonomous(name="AutoDrive4MotorRotateBlueShoot3Ball", group="Autonomous")
+@Autonomous(name="AutoBlueShoot3BallWithCamera", group="Autonomous")
 public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;

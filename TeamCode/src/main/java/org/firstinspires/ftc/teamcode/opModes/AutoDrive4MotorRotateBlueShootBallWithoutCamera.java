@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 //Blue
-@Autonomous(name="AutoDrive4MotorRotateBlueShootBallWithoutCamera", group="Autonomous")
+@Autonomous(name="AutoBlueShoot3BallNoCamera", group="Autonomous")
 public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMode {
 
     // Drive motors

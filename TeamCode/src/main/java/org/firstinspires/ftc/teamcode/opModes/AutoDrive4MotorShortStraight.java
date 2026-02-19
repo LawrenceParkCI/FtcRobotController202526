@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-@Autonomous(name="AutoDrive4MotorShortStraight", group="Autonomous")
+@Autonomous(name="AutoDriveStraight", group="Autonomous")
 public class AutoDrive4MotorShortStraight extends LinearOpMode {
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;

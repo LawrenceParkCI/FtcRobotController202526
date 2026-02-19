@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.control.Shooter;
 import java.util.Arrays;
 
 //Red
-@Autonomous(name="AutoDrive4MotorRotateRedShootBallWithoutCamera", group="Autonomous")
+@Autonomous(name="AutoRedShoot3BallNoCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode {
 
     // Drive motors
