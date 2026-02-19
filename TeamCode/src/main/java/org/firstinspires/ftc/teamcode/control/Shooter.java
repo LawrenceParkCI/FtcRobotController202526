@@ -74,12 +74,11 @@ public class Shooter {
      * @return Returns true when the curent RPM is greater than
      * or equal to the target RPM.
      */
-    public boolean updateRPM() {
+    public void updateRPM() {
         //get ticks per second
         double ticksPerSec = shooter.getVelocity();
         //update current RPM ticksPerSec*RPM -> RPM
         currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
-        return isTargetMet();
     }
 
     public void start(double desiredRPM){

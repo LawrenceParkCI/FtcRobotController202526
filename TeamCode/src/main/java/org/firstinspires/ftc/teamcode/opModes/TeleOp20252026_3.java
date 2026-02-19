@@ -68,18 +68,16 @@ public class TeleOp20252026_3 extends LinearOpMode {
             drive();
             // --- INTAKE CONTROL on shooter (gamepad1) ---
             if(gamepad1.y && !intakeActive){
-                double RPM = -1200;
-                // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-                double ticksPerSec = RPM * Shooter.SHOOTER_PPR / 60.0;
+                shooter.start(-1200);
                 // DcMotorEx allows setting velocity in ticks per second
                 intakeActive = true;
-                shooter.getMotor().setVelocity(ticksPerSec);
                 currTimeIntake = System.currentTimeMillis();
             }
             doAll();
+            //timeout for shooter intake
             if(intakeActive && System.currentTimeMillis() - currTimeIntake >= 1750){
                 intakeActive = false;
-                shooter.getMotor().setVelocity(0);
+                shooter.stop();
             }
             doAll();
 
