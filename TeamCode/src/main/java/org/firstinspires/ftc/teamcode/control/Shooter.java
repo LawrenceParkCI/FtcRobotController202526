@@ -20,7 +20,7 @@ public class Shooter {
 
     // Encoder specs (from manufacturer data)
     // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
-    private static final double SHOOTER_PPR = 28.0;
+    public static final double SHOOTER_PPR = 28.0;
     // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
     // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
     private static final double SERVO_FULL_RANGE_DEG = 300.0;
@@ -91,6 +91,8 @@ public class Shooter {
     public void stop(){
         setTargetRPM(0);
         setPusherAngle(0);
+        shooterActive = false;
+        pusherActive = false;
     }
 
     public void push(){
@@ -119,4 +121,7 @@ public class Shooter {
         return shooter;
     }
 
+    public Object getTargetRPM() {
+        return targetRPM;
+    }
 }
