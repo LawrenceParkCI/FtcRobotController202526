@@ -20,6 +20,9 @@ import java.util.Arrays;
 
 @Autonomous(name="AutoRedShoot3BallWithCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
+
+    private int delay = 0; //ms delay before backing up
+
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
@@ -58,7 +61,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         long start = System.currentTimeMillis();
         //time is for delay before backing up
         while (opModeIsActive()
-                && (System.currentTimeMillis() - start) < 4000){
+                && (System.currentTimeMillis() - start) < delay){
             mainDo();
         }
         driveForwardFixedTimeandStop(1.4, 1);
@@ -85,7 +88,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter  = new Shooter(hardwareMap);
         camera = new Camera(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
-
         imu = hardwareMap.get(IMU.class, "imu");
 
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -106,8 +108,6 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         // Intake motor direction default
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
-        // Alliance tags: ID 20 (blue scoring), ID 24 (red scoring)
     }
     private void driveForwardFixedTimeandStop(double seconds, double power) {
         setDrivePower(power);
@@ -158,6 +158,24 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         }
         stopDrive();
     }
+
+    private void rotateUntilColor(char color){
+        int rotcount = 0;
+        while(true){
+            if(color == 'g' && isColorGreen()){
+                break;
+            }
+            if(color == 'p' && isColorPurple()){
+                break;
+            }
+            if(rotcount >= 6){
+                break;
+            }
+            rotcount++;
+            carousel.rotateThirdLeft();
+        }
+    }
+
     //CCW - negative
     //CW - positive;
     private void rotateFixedTime(double seconds, double power) {

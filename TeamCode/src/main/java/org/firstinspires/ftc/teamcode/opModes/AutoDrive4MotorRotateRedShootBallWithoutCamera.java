@@ -16,6 +16,7 @@ import java.util.Arrays;
 @Autonomous(name="AutoRedShoot3BallNoCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode {
 
+    private int delay = 0; //ms delay before backing up
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Mechanism motors
@@ -51,6 +52,12 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         sleep(200);
         rotateFixedTime(0.5, -1);
         sleep(200);
+        long start = System.currentTimeMillis();
+        //time is for delay before backing up
+        while (opModeIsActive()
+                && (System.currentTimeMillis() - start) < delay){
+            mainDo();
+        }
         driveForwardFixedTime(1.4, 1);
         stopDrive();
 
@@ -86,10 +93,6 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Shooter motor reference: goBILDA 5202 1:1, 6000 rpm
-        // Carousel motor reference: goBILDA 5202 99.5:1, ~60 rpm
-        // Servo reference: Studica Multi-Mode Smart Servo (Standard Mode)
-        // Alliance tags: ID 20 (blue scoring), ID 24 (red scoring)
     }
     private void driveForwardFixedTime(double seconds, double power) {
         long start = System.currentTimeMillis();
@@ -124,30 +127,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
     private void stopDrive() {
         setDrivePower(0.0);
     }
-//    private void setServoAngle(Servo s, double angleDeg) {
-//        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
-//        double pos = RangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
-//        s.setPosition(pos);
-//    }
-//    private double RangeClip(double v, double min, double max) {
-//        return Math.max(min, Math.min(max, v));
-//    }
-    //Shoots at target rpm
-//    private void shoot(double RPM){
-//        setShooterTargetRPM(RPM);
-//        updateShooterRPM();
-//        long currMilli = System.currentTimeMillis();
-//        while (opModeIsActive() && !targetMet && (System.currentTimeMillis() - currMilli < 8000)) {
-//            updateShooterRPM();
-//        }
-//        sleep(500);
-//        setServoAngle(pusher, 80.0);
-//        sleep(200); // short wait to allow movement (adjust as needed)
-//        setServoAngle(pusher, 0.0);
-//        sleep(500);
-//        setShooterTargetRPM(0);
-//        updateShooterRPM();
-//    }
+
     private void shoot(double RPM){
         shooter.start(RPM);
         while(opModeIsActive() && !shooter.isTargetMet()){
@@ -163,24 +143,6 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         }
         shooter.stop();
     }
-//    private void setShooterTargetRPM(double desiredRPM) {
-//        targetRPM = desiredRPM; // target minimum as specified
-//        // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-//        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
-//        // DcMotorEx allows setting velocity in ticks per second
-//        shooter.setVelocity(ticksPerSec);
-//        // Immediately after changing speed, update actual currentRPM from encoder
-//        updateShooterRPM();
-//        targetMet = (currentRPM >= targetRPM);
-//    }
-//
-//    private void updateShooterRPM() {
-//        //get ticks per second
-//        double ticksPerSec = shooter.getVelocity();
-//        //update current RPM ticksPerSec*RPM -> RPM
-//        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
-//        targetMet = (currentRPM >= targetRPM);
-//    }
 
     private void mainDo(){
         shooter.updateRPM();
