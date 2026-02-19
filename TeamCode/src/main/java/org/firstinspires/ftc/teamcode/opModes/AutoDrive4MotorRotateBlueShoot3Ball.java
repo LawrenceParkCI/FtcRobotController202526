@@ -83,9 +83,12 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         while (opModeIsActive()) {
             if (isStopRequested()) {
                 camera.shutdownVision();
+                MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
                 return;
             }
         }
+
+        MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         camera.shutdownVision();
     }
     private void initHardware() {

@@ -27,6 +27,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
     //Gyro for field oriented driving.
     private IMU imu;
     private boolean fieldDriveMode = true;
+    private double startHeading;
 
     //Intake State
     private boolean intakeActive = false;
@@ -175,12 +176,13 @@ public class TeleOp20252026_2 extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP
-        )));
+        //retrieving imu from teleop???
+        imu = MyGyro.imu;
+//        imu = hardwareMap.get(IMU.class, "imu");
+//        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+//                RevHubOrientationOnRobot.UsbFacingDirection.UP
+//        )));
 
         //creates the carousel starting in manual mode
         carousel = new Carousel(hardwareMap, Carousel.MANUAL);

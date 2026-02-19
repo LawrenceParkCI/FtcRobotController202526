@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.control.Camera;
 import org.firstinspires.ftc.teamcode.control.Carousel;
+import org.firstinspires.ftc.teamcode.control.MyGyro;
 import org.firstinspires.ftc.teamcode.control.Shooter;
 
 import java.util.Arrays;
@@ -69,10 +70,12 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
             if (isStopRequested()) {
+                MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
                 camera.shutdownVision();
                 return;
             }
         }
+        MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         camera.shutdownVision();
     }
 
@@ -88,12 +91,14 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         shooter  = new Shooter(hardwareMap);
         camera = new Camera(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP
-        )));
+        MyGyro.createIMU(hardwareMap);
+        imu = MyGyro.imu;
+//        imu = hardwareMap.get(IMU.class, "imu");
+//
+//        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+//                RevHubOrientationOnRobot.UsbFacingDirection.UP
+//        )));
 
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);

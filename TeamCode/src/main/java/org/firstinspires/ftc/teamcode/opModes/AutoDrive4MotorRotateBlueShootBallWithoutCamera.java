@@ -59,6 +59,7 @@ public class AutoDrive4MotorRotateBlueShootBallWithoutCamera extends LinearOpMod
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
         }
+
     }
 
     private void initHardware() {
