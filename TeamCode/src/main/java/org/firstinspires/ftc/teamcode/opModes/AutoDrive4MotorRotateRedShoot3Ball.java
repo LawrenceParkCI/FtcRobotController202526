@@ -49,22 +49,27 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
             camera.shutdownVision();
             return;
         }
+
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
-        driveForwardFixedTimeandStop(0.7, 1);
         imu.resetYaw();
+        rotateToAngle(36, -0.5); //or start straight
+        driveForwardFixedTimeandStop(0.7, 1);
         rotateUntilPattern(-0.35);
-        rotateToZero(0.5);
-
+        rotateToAngle(36,0.5); //or rotate to zereo
         hardCodeShoot(2500);
         rotateFixedTime(0.45, -1);
+//        rotateToAngle(54, -0.5);
+//        imu.resetYaw();
         long start = System.currentTimeMillis();
         //time is for delay before backing up
         while (opModeIsActive()
                 && (System.currentTimeMillis() - start) < delay){
             mainDo();
         }
+//        rotateToAngle(270, 0.5); // goes to start angle for teleop
+//        imu.resetYaw();
         driveForwardFixedTimeandStop(1.4, 1);
 
         // Standstill, keep updating AprilTag data
@@ -142,14 +147,22 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         stopDrive();
     }
 
-    private void rotateToZero(double power){
+    private void rotateToAngle(double angle, double power){
         setRotatePower(power);
-        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) < 0.1
-        && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) > -0.1)){
+        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) < angle+0.1
+                && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) > angle-0.1)){
             mainDo();
         }
         stopDrive();
     }
+//    private void rotateToZero(double power){
+//        setRotatePower(power);
+//        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) < 0.1
+//        && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) > -0.1)){
+//            mainDo();
+//        }
+//        stopDrive();
+//    }
     private void rotateUntilPattern(double power){
         long start = System.currentTimeMillis();
         setRotatePower(power);
