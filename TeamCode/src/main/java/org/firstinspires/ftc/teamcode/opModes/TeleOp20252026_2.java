@@ -1,19 +1,19 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.IMU;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.teamcode.control.Carousel;
+import org.firstinspires.ftc.teamcode.control.*;
 
 @TeleOp(name = "TeleOp20252026_2", group = "TeleOp")
 public class TeleOp20252026_2 extends LinearOpMode {
@@ -22,39 +22,20 @@ public class TeleOp20252026_2 extends LinearOpMode {
     // Expansion Hub motors
     private Carousel carousel;      // GoBilda 60 RPM gearbox (99.5:1) - encoder used for angle control
     private DcMotor intake;          // Tetrix
-    private DcMotorEx shooter;       // GoBilda 6000 RPM motor (1:1) with encoder
-    // Servo
-    private Servo pusher;            // multimode smart servo (angular mode), initialized to 0 degrees
+    private Shooter shooter;       // GoBilda 6000 RPM motor (1:1) with encoder
 
-    // Shooter RPM tracking
-    private double currentRPM = 0.0;
-    private double targetRPM = 0.0;
-    private boolean targetMet = false;
-    // Encoder specs (from manufacturer data)
-    // Shooter 5202 motor (1:1) -> 28 pulses per motor revolution at output shaft.
-    private static final double SHOOTER_PPR = 28.0;
-
-    // Servo angle mapping if servo range is 300 degrees (±150) in standard mode.
-    // Map 0..300 degrees -> 0.0..1.0 (adjust if your servo API expects different)
-    private static final double SERVO_FULL_RANGE_DEG = 300.0;
+    //Gyro for field oriented driving.
+    private IMU imu;
+    private boolean fieldDriveMode = true;
+    private double startHeading;
 
     //Intake State
     private boolean intakeActive = false;
     private long currTimeIntake=0;
 
     //Shooter state
-
-    private boolean servoActive = false;
-    private boolean rpmShooterHold = false;
-    private boolean shooterActive = false;
     private long currTimeShooter= 0;
 
-
-    private NormalizedColorSensor colorSensorFront;
-    private NormalizedColorSensor colorSensorBack;
-
-    private char front = 'a';
-    private char back = 'a';
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -68,18 +49,16 @@ public class TeleOp20252026_2 extends LinearOpMode {
             drive();
             // --- INTAKE CONTROL on shooter (gamepad1) ---
             if(gamepad1.y && !intakeActive){
-                double RPM = -1200;
-                // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-                double ticksPerSec = RPM * SHOOTER_PPR / 60.0;
+                shooter.start(-1200);
                 // DcMotorEx allows setting velocity in ticks per second
                 intakeActive = true;
-                shooter.setVelocity(ticksPerSec);
                 currTimeIntake = System.currentTimeMillis();
             }
             doAll();
+            //timeout for shooter intake
             if(intakeActive && System.currentTimeMillis() - currTimeIntake >= 1750){
                 intakeActive = false;
-                shooter.setVelocity(0);
+                shooter.stop();
             }
             doAll();
 
@@ -95,6 +74,11 @@ public class TeleOp20252026_2 extends LinearOpMode {
             // A limits max to 30%
             if (gamepad1.a) intakePower *= 0.30;
             intake.setPower(intakePower);
+
+            if (gamepad1.backWasReleased())
+                fieldDriveMode = !fieldDriveMode;
+
+
             // --- SHOOTER CONTROL with servo (gamepad2) ---
             // Buttons: X=1000 RPM, A=2500 RPM, B=4000 RPM, shoot and stop motor once done
             // When pressed, set motor velocity and update currentRPM and targetRPM logic.
@@ -103,43 +87,22 @@ public class TeleOp20252026_2 extends LinearOpMode {
             // desiredRPM -> ticksPerSec = desiredRPM * (SHOOTER_PPR / 60)
 
             doAll();
-            if (gamepad2.x && !shooterActive) {
-                setDcMotorRPM(1000);
-                shooterActive = true;
-                servoActive = false;
-            }
-            if (gamepad2.a && !shooterActive) {
-                setDcMotorRPM(2500);
-                shooterActive = true;
-                servoActive = false;
-            }
-            if (gamepad2.b && !shooterActive) {
-                setDcMotorRPM(4500);
-                shooterActive = true;
-                servoActive = false;
-            }
-            if(gamepad2.y && shooterActive){
-                shooterActive = false;
-                stopDcMotor();
-            }
+            getShooterControls();
+
             doAll();
-            if(shooterActive){
+            if(shooter.isShooterActive()){
                 doAll();
-                if(targetMet && !rpmShooterHold){
-                    rpmShooterHold = true;
-                    servoActive = true;
+                if(shooter.isTargetMet() && !shooter.isPusherActive()){
+                    shooter.push();
                     currTimeShooter = System.currentTimeMillis();
-                    setServoAngle(pusher, 80.0);
                 }
 
             }
             doAll();
-            if(servoActive && System.currentTimeMillis() - currTimeShooter >= 200){
-                setServoAngle(pusher, 0.0);
-                stopDcMotor();
-                shooterActive = false;
-                rpmShooterHold = false;
-                servoActive = false;
+
+            //stop the shooter 00 ms after servo pushed
+            if(shooter.isPusherActive() && System.currentTimeMillis() - currTimeShooter >= 200){
+                shooter.stop();
             }
             doAll();
             // --- CAROUSEL CONTROL (gamepad2) ---
@@ -152,7 +115,7 @@ public class TeleOp20252026_2 extends LinearOpMode {
             }
 
             // Check if move is complete or left_bumper pressed to cancel move
-            if (carousel.isFinished() || carousel.isRotateActive() && gamepad2.left_bumper) {
+            if (carousel.isFinished() || carousel.isRotateActive() && gamepad2.back) {
                 carousel.stop();
             }
 
@@ -187,10 +150,23 @@ public class TeleOp20252026_2 extends LinearOpMode {
         } else {
             carouselPower = 0.0;
         }
-        if (gamepad2.right_bumper) {
-            carouselPower *= 0.3;
-        }
         carousel.move(carouselPower);
+    }
+    private void getShooterControls(){
+        if(!shooter.isShooterActive()) {
+            if (gamepad2.x) {
+                shooter.start(1000);
+            }
+            if (gamepad2.a) {
+                shooter.start(2500);
+            }
+            if (gamepad2.b) {
+                shooter.start(4500);
+            }
+            if (gamepad2.y) {
+                shooter.stop();
+            }
+        }
     }
 
     private void initHardware(){
@@ -200,15 +176,20 @@ public class TeleOp20252026_2 extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
+        //retrieving imu from teleop???
+        imu = MyGyro.imu;
+//        imu = hardwareMap.get(IMU.class, "imu");
+//        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+//                RevHubOrientationOnRobot.UsbFacingDirection.UP
+//        )));
+
         //creates the carousel starting in manual mode
-        carousel = new Carousel(Carousel.MANUAL);
+        carousel = new Carousel(hardwareMap, Carousel.MANUAL);
 
         intake   = hardwareMap.get(DcMotor.class, "intake");
-        shooter  = hardwareMap.get(DcMotorEx.class, "shooter");
+        shooter  = new Shooter(hardwareMap);
 
-        pusher = hardwareMap.get(Servo.class, "pusher");
-        colorSensorFront = hardwareMap.get(NormalizedColorSensor.class, "colorSensorFront");
-        colorSensorBack = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
         leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -225,22 +206,15 @@ public class TeleOp20252026_2 extends LinearOpMode {
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Shooter and carousel: set mode
-        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        // Initialize pusher servo to 0 degrees (calibrated start)
-        setServoAngle(pusher, 0);
     }
+
+    @SuppressLint("DefaultLocale")
     private void updateTelemetry(){
         telemetry.clearAll();
-        telemetry.addData("ColorFront", front);
-        telemetry.addData("ColorBack", back);
-        telemetry.addData("Current Shooter RPM:", currentRPM);
-        telemetry.addData("Current Target RPM:", String.format("%.1f", targetRPM));
-        telemetry.addData("Current Amperage ", shooter.getCurrent(CurrentUnit.AMPS));
-        telemetry.addData("Target RPM Met?: ", targetMet);
+        telemetry.addData("Current Shooter RPM:", shooter.getCurrentRPM());
+        telemetry.addData("Current Target RPM:", String.format("%.1f", shooter.getTargetRPM()));
+        telemetry.addData("Current Amperage ", shooter.getMotor().getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("Target RPM Met?: ", shooter.isTargetMet());
         telemetry.addData("Carousel Positon", carousel.getMotor().getCurrentPosition());
         telemetry.addData("Carousel Power", carousel.getMotor().getPower());
         telemetry.addData("Carousel Active", carousel.isRotateActive());
@@ -256,6 +230,19 @@ public class TeleOp20252026_2 extends LinearOpMode {
         double lx = gamepad1.left_stick_x;   // left-stick left/right: strafing
         double ly = -gamepad1.left_stick_y;   // left-stick up/down: forward/back
         double rx = -gamepad1.right_stick_x;  // right-stick left/right: rotation
+        if(fieldDriveMode) {
+            if (gamepad1.bWasPressed()) {
+                imu.resetYaw();
+            }
+            // Compute base motion powers
+            // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
+            double theta = Math.atan2(ly, lx);
+            double r = Math.hypot(lx, ly);
+
+            theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            ly = r * Math.sin(theta);
+            lx = r * Math.cos(theta);
+        }
 
         // Compute base motion powers
         // Mecanum drive mixing: forward/back = ly, strafe = lx, rotate = rx
@@ -277,73 +264,13 @@ public class TeleOp20252026_2 extends LinearOpMode {
         leftBack.setPower(lb * speedLimit);
         rightBack.setPower(rb * speedLimit);
     }
-    private void setServoAngle(Servo s, double angleDeg) {
-        // Map 0..SERVO_FULL_RANGE_DEG to 0..1 position
-        double pos = rangeClip(angleDeg / SERVO_FULL_RANGE_DEG, 0.0, 1.0);
-        s.setPosition(pos);
-    }
+
     private double rangeClip(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
     }
-    private void setDcMotorRPM(double desiredRPM) {
-        targetRPM = desiredRPM; // target minimum as specified
-        // Compute ticks per second for desired rpm (we set motor velocity to achieve the desired RPM)
-        double ticksPerSec = desiredRPM * SHOOTER_PPR / 60.0;
-        // DcMotorEx allows setting velocity in ticks per second
-        shooter.setVelocity(ticksPerSec);
-        doAll();
-    }
-    private void stopDcMotor(){
-        setDcMotorRPM( 0);
-    }
-    private void updateDcMotorRPM() {
-        //get ticks per second
-        double ticksPerSec = shooter.getVelocity();
-        //update current RPM ticksPerSec*RPM -> RPM
-        currentRPM = ticksPerSec * 60.0 / SHOOTER_PPR;
-        targetMet = currentRPM >= targetRPM;
-    }
-    private int normalizeAngle(int a) {
-        int v = a % 360;
-        if (v < 0) v += 360.0;
-        return v;
-    }
-    private void readColor(){
-        // Read normalized RGBA values
-        NormalizedRGBA colorsfront = colorSensorFront.getNormalizedColors();
-        float[] hsv1 = new float[3];
-        // Convert to HSV
-        Color.colorToHSV(colorsfront.toColor(), hsv1);
-        NormalizedRGBA colorsBack = colorSensorBack.getNormalizedColors();
-        float[] hsv2 = new float[3];
-        // Convert to HSV
-        Color.colorToHSV(colorsBack.toColor(), hsv2);
-        if(isColorGreen(hsv1)){
-            front = 'g';
-        } else if(isColorPurple(hsv1)){
-            front = 'p';
-        }else{
-            front = 'a';
-        }
-        if(isColorGreen(hsv2)){
-            back = 'g';
-        } else if(isColorPurple(hsv2)){
-            back = 'p';
-        }else{
-            back = 'a';
-        }
 
-    }
-    private boolean isColorGreen(float[] hsv){
-        double hue = hsv[0];
-        return (hue >= 120 && hue <= 180);
-    }
-    private boolean isColorPurple(float[] hsv){
-        double hue = hsv[0];
-        return (hue >= 181 && hue <= 245);
-    }
     private void doAll(){
-        updateDcMotorRPM();
+        shooter.updateRPM();
         updateTelemetry();
     }
 }
