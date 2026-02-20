@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-@Autonomous(name="AutoDrive4MotorShortStraight", group="Autonomous")
+@Autonomous(name="AutoDriveStraight", group="Autonomous")
 public class AutoDrive4MotorShortStraight extends LinearOpMode {
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -45,6 +45,12 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
             return;
         }
         mainDo();
+        long start = System.currentTimeMillis();
+        //time is for delay before driving forwards
+        while (opModeIsActive()
+                && (System.currentTimeMillis() - start) < 0){
+            mainDo();
+        }
         // Drive forward for 1.5s
         driveForwardFixedTimeandStop(1, -1);
         // Standstill, keep updating AprilTag data
