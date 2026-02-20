@@ -61,4 +61,3 @@ public class ManualDrive2Motor_WithLowSpeed extends LinearOpMode {
         rightMotor.setPower(rightPower * speedScale);
     }
 }
-
