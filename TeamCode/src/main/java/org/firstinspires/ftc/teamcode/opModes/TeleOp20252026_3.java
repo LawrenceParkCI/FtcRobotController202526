@@ -45,10 +45,10 @@ public class TeleOp20252026_3 extends LinearOpMode {
     private NormalizedColorSensor colorSensorFront;
     private NormalizedColorSensor colorSensorBack;
 
-    private int mode = 1; //1 intake 2//shoot
+    private int mode = 2; //1 intake 2//shoot
 
     private char[] colorIntake = {'a', 'a', 'a'};
-    private char[] colorShoot = null;
+    private char[] colorShoot = {'a','a','a'};
     private char front = 'a';
     private char back = 'a';
 
@@ -69,11 +69,11 @@ public class TeleOp20252026_3 extends LinearOpMode {
                 shooter.start(-1200);
                 // DcMotorEx allows setting velocity in ticks per second
                 intakeActive = true;
-                currTimeIntake = System.currentTimeMillis();
+//                currTimeIntake = System.currentTimeMillis();
             }
             doAll();
             //timeout for shooter intake
-            if(intakeActive && System.currentTimeMillis() - currTimeIntake >= 1750){
+            if(intakeActive && !gamepad1.y){
                 intakeActive = false;
                 shooter.stop();
             }
@@ -106,11 +106,12 @@ public class TeleOp20252026_3 extends LinearOpMode {
             getShooterControls();
 
             doAll();
-            if(shooter.isShooterActive()){
+            if(shooter.isShooterActive() && !intakeActive){
                 doAll();
                 if(shooter.isTargetMet() && !shooter.isPusherActive()){
                     shooter.push();
                     currTimeShooter = System.currentTimeMillis();
+                    colorShoot[1] = 'a';
                     colorIntake[1] = 'a';
                 }
             }
@@ -148,9 +149,9 @@ public class TeleOp20252026_3 extends LinearOpMode {
             if (gamepad2.b) {
                 shooter.start(4500);
             }
-            if (gamepad2.y) {
-                shooter.stop();
-            }
+        }
+        if (gamepad2.y) {
+            shooter.stop();
         }
     }
     private void initHardware(){
@@ -160,12 +161,9 @@ public class TeleOp20252026_3 extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
 
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP
-        )));
+        if((imu = MyGyro.imu) == null){
+            imu = MyGyro.createIMU(hardwareMap);
+        }
 
         carousel = new Carousel(hardwareMap, Carousel.MANUAL);
         intake   = hardwareMap.get(DcMotor.class, "intake");
@@ -194,7 +192,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
     private void updateTelemetry(){
         telemetry.clearAll();
         telemetry.addData("Carousel Degree: ", carouselAngleDeg);
-        if(mode ==1){
+        if(mode == 1){
             telemetry.addData("ColorFront", front);
             telemetry.addData("Intake pattern (Front, Other 1, Other 2) Clockwise:", Arrays.toString(colorIntake));
         }
@@ -252,7 +250,7 @@ public class TeleOp20252026_3 extends LinearOpMode {
         rb = rangeClip(-rb, -1.0,1.0);
 
         // Low speed mode: RT on gamepad1 limits to 30%
-        double speedLimit = gamepad1.right_trigger > 0.05 ? 0.30 : 1.0;
+        double speedLimit = gamepad1.right_trigger > 0.05 ? 0.5 : 1.0;
         leftFront.setPower(lf * speedLimit);
         rightFront.setPower(rf * speedLimit);
         leftBack.setPower(lb * speedLimit);
@@ -285,18 +283,20 @@ public class TeleOp20252026_3 extends LinearOpMode {
 
         shift(rotateDegree);
 
-        if(gamepad2.rightStickButtonWasPressed()){
+        if(gamepad2.leftBumperWasPressed()){
             if(mode == 1){
                 rotateDegree = 60;
                 carousel.rotateSixthRight();
                 shift(rotateDegree);
             }
 
-            if(colorIntake[0] == 'g'){
+            if(colorShoot[1] == 'g') {
+
+            }else if(colorShoot[0] == 'g'){
                 rotateDegree = 120;
                 carousel.rotateThirdRight();
                 shift(rotateDegree);
-            }else if(colorIntake[2] == 'g'){
+            }else if(colorShoot[2] == 'g'){
                 rotateDegree = -120;
                 carousel.rotateThirdLeft();
                 shift(rotateDegree);
@@ -305,18 +305,20 @@ public class TeleOp20252026_3 extends LinearOpMode {
 
         }
 
-        if(gamepad2.leftStickButtonWasPressed()){
+        if(gamepad2.rightBumperWasPressed()){
             if (mode == 1) {
                 rotateDegree = 60;
                 carousel.rotateSixthRight();
                 shift(rotateDegree);
             }
 
-            if(colorIntake[0] == 'p'){
+            if(colorShoot[1] == 'p'){
+
+            }else if(colorShoot[0] == 'p'){
                 rotateDegree = 120;
                 carousel.rotateThirdRight();
                 shift(rotateDegree);
-            }else if(colorIntake[2] == 'p'){
+            }else if(colorShoot[2] == 'p'){
                 rotateDegree = -120;
                 carousel.rotateThirdLeft();
                 shift(rotateDegree);
@@ -403,21 +405,18 @@ public class TeleOp20252026_3 extends LinearOpMode {
             back = 'a';
         }
 
-        if(mode == 1){
+        if(mode == 1 && colorIntake[0] == 'a'){
             colorIntake[0] = front;
-        }
-        if(mode == 2){
-            colorShoot[1] = back;
         }
 
     }
     private boolean isColorGreen(float[] hsv){
         double hue = hsv[0];
-        return (hue >= 120 && hue <= 180);
+        return (hue >= 120 && hue <= 170);
     }
     private boolean isColorPurple(float[] hsv){
         double hue = hsv[0];
-        return (hue >= 181 && hue <= 245);
+        return (hue >= 171 && hue <= 245);
     }
     public static void shiftRightByOne(char[] a) {
         int n = a.length;

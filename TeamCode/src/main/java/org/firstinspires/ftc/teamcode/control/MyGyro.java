@@ -9,12 +9,13 @@ public class MyGyro {
     public static double lastKnownHeading = 0.0;
     public static IMU imu;
 
-    public static void createIMU(HardwareMap hardwareMap){
+    public static IMU createIMU(HardwareMap hardwareMap){
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP
         )));
+        return imu;
     }
 
 }

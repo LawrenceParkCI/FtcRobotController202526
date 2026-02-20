@@ -54,15 +54,19 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         telemetry.clearAll();
         telemetry.update();
         imu.resetYaw();
-        rotateToAngle(36, -0.5); //or start straight
+        rotateToAngle(36, -0.7); //or start straight
         driveForwardFixedTimeandStop(0.7, 1);
-        rotateUntilPattern(-0.35);
+        rotateToAngle(115,-0.5);
+        long start = System.currentTimeMillis();
+        while (opModeIsActive() && (currentPattern=camera.getPattern()) == null && System.currentTimeMillis() - start < 500)
+            mainDo();
+        if(currentPattern == null)
+            searchForTag();
+        mainDo();
         rotateToAngle(36,0.5); //or rotate to zereo
         hardCodeShoot(2500);
-        rotateFixedTime(0.45, -1);
-//        rotateToAngle(54, -0.5);
-//        imu.resetYaw();
-        long start = System.currentTimeMillis();
+        rotateToAngle(78, -0.7);
+        start = System.currentTimeMillis();
         //time is for delay before backing up
         while (opModeIsActive()
                 && (System.currentTimeMillis() - start) < delay){
@@ -82,6 +86,11 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
         }
         MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         camera.shutdownVision();
+    }
+
+    private void searchForTag() {
+        rotateToAngle(140, -0.3);
+        rotateToAngle(36, 0.5);
     }
 
 
@@ -148,10 +157,12 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     }
 
     private void rotateToAngle(double angle, double power){
+
         setRotatePower(power);
-        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) < angle+0.1
-                && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) > angle-0.1)){
-            mainDo();
+        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) < angle+2.5
+                && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) > angle-2.5)){
+
+            if(currentPattern == null) setRotatePower(power);
         }
         stopDrive();
     }
@@ -302,6 +313,7 @@ public class AutoDrive4MotorRotateRedShoot3Ball extends LinearOpMode {
     private void updateTelemetry(){
         telemetry.clearAll();
         telemetry.addData("Pattern:", Arrays.toString(currentPattern));
+        telemetry.addData("Direction:", imu.getRobotYawPitchRollAngles().getYaw());
         telemetry.addData("Distance to Goal:", camera.getDistance(RED_GOAL_ID));
         telemetry.addData("Goal Position", camera.getFacing(RED_GOAL_ID));
         camera.display(telemetry);

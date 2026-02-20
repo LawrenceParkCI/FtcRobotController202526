@@ -163,9 +163,9 @@ public class TeleOp20252026_2 extends LinearOpMode {
             if (gamepad2.b) {
                 shooter.start(4500);
             }
-            if (gamepad2.y) {
-                shooter.stop();
-            }
+        }
+        if (gamepad2.y) {
+            shooter.stop();
         }
     }
 

@@ -30,7 +30,7 @@ import java.util.Random;
 @Autonomous(name="AutoBlueShoot3BallWithCamera", group="Autonomous")
 public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
 
-    private int delay = 0; //ms delay before backing up
+    private int delay = 5000; //ms delay before backing up
 
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -63,21 +63,29 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         waitForStart();
         telemetry.clearAll();
         telemetry.update();
+        imu.resetYaw();;
+        rotateToAngle(-36, 0.7);
         driveForwardFixedTimeandStop(0.7, 1);
-        imu.resetYaw();
-        rotateUntilPattern(0.35);
-        rotateToZero(-0.5); // how does this work? need to be positive
-
-        hardCodeShoot(2500);
-        rotateFixedTime(0.45, 1);
+        rotateToAngle(-115, 0.5);
 
         long start = System.currentTimeMillis();
+        while (opModeIsActive() && (currentPattern=camera.getPattern()) == null && System.currentTimeMillis() - start < 500)
+            mainDo();
+        if(currentPattern == null)
+            searchForTag();
+        mainDo();
+        rotateToAngle(-36,-0.5); //or rotate to zereo
+
+        hardCodeShoot(2500);
+        rotateToAngle(-78, 0.7);
+
+        start = System.currentTimeMillis();
         //time is for delay before backing up
         while (opModeIsActive()
                 && (System.currentTimeMillis() - start) < delay){
             mainDo();
         }
-        driveForwardFixedTimeandStop(2.0, 1);
+        driveForwardFixedTimeandStop(1.4, 1);
 
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
@@ -91,6 +99,22 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         MyGyro.lastKnownHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         camera.shutdownVision();
     }
+
+    private void searchForTag() {
+        rotateToAngle(140, -0.3);
+        rotateToAngle(36, 0.5);
+    }
+
+    private void rotateToAngle(double angle, double power){
+        setRotatePower(power);
+        while (!(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) < angle+2.5
+                && imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) > angle-2.5)){
+
+            if(currentPattern == null) setRotatePower(power);
+        }
+
+        stopDrive();
+    }
     private void initHardware() {
         // --- Hardware mapping ---
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
@@ -100,13 +124,17 @@ public class AutoDrive4MotorRotateBlueShoot3Ball extends LinearOpMode {
         carousel = new Carousel(hardwareMap, Carousel.AUTO);
         intake   = hardwareMap.get(DcMotor.class, "intake");
         shooter  = new Shooter(hardwareMap);
+        camera = new Camera(hardwareMap);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensorBack");
-        imu = hardwareMap.get(IMU.class, "imu");
 
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP
-        )));
+        MyGyro.createIMU(hardwareMap);
+        imu = MyGyro.imu;
+//        imu = hardwareMap.get(IMU.class, "imu");
+//
+//        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+//                RevHubOrientationOnRobot.UsbFacingDirection.UP
+//        )));
 
         // Set drive motor directions (adjust if your robot's wiring is different)
         leftFront.setDirection(DcMotorSimple.Direction.FORWARD);

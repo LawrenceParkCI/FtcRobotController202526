@@ -16,6 +16,7 @@ import java.util.Arrays;
 @Autonomous(name="AutoRedShoot3BallNoCamera", group="Autonomous")
 public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode {
 
+    private int startDelay = 0;
     private int delay = 0; //ms delay before backing up
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
@@ -39,6 +40,12 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
             return;
         }
 
+        long start = System.currentTimeMillis();
+        //time is for delay before backing up
+        while (opModeIsActive()
+                && (System.currentTimeMillis() - start) < startDelay){
+            mainDo();
+        }
         // Drive forward for total 3.1s
         driveForwardFixedTime(0.7, 1);
         sleep(200);
@@ -52,7 +59,7 @@ public class AutoDrive4MotorRotateRedShootBallWithoutCamera extends LinearOpMode
         sleep(200);
         rotateFixedTime(0.5, -1);
         sleep(200);
-        long start = System.currentTimeMillis();
+        start = System.currentTimeMillis();
         //time is for delay before backing up
         while (opModeIsActive()
                 && (System.currentTimeMillis() - start) < delay){

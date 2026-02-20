@@ -89,7 +89,7 @@ public class Camera {
             }
             // ID 20 = blue alliance scoring, ID 24 = red alliance scoring
         }
-        return new char[]{'a', 'a', (char)(id%10 + 97)};
+        return null;
     }
 
     public void  updateAprilTagData() {

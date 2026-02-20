@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,6 +16,8 @@ import java.util.List;
 
 @Autonomous(name="AutoDriveStraight", group="Autonomous")
 public class AutoDrive4MotorShortStraight extends LinearOpMode {
+    // delay before drive ms
+    int delay = 20000;
     // Drive motors
     private DcMotor leftFront, leftBack, rightFront, rightBack;
     // Vision
@@ -48,11 +50,11 @@ public class AutoDrive4MotorShortStraight extends LinearOpMode {
         long start = System.currentTimeMillis();
         //time is for delay before driving forwards
         while (opModeIsActive()
-                && (System.currentTimeMillis() - start) < 0){
+                && (System.currentTimeMillis() - start) < delay){
             mainDo();
         }
         // Drive forward for 1.5s
-        driveForwardFixedTimeandStop(1, -1);
+        driveForwardFixedTimeandStop(0.4, -1);
         // Standstill, keep updating AprilTag data
         while (opModeIsActive()) {
             mainDo();
